@@ -40,16 +40,17 @@ export const loginValidation = [
 // 📌 forgot-password Validation
 export const forgotPasswordValidation = [
   body("email")
-    .trim()
-    .notEmpty()
-    .withMessage("Email is required")
-    .isEmail()
-    .withMessage("Invalid email format"),
+  .trim()
+  .notEmpty()
+  .withMessage("Email is required")
+  .bail() //  Stop validation if empty
+  .isEmail()
+  .withMessage("Invalid email format"),
 ];
 
 // 📌 Reset-password Validation
 export const resetPasswordValidation = [
-  body("password")
+  body("newPassword")
     .isLength({ min: 8 })
     .withMessage("Password must be at least 8 characters long")
     .matches(/[A-Z]/)

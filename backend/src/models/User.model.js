@@ -34,7 +34,7 @@ const UserSchema = new mongoose.Schema(
         },
       },
     ],
-    // refresh token for reseting access token
+    // refresh token for refreshing access token
     refreshToken: { type: String, default: null },
     refreshTokenExpires: { type: Date, default: null },
 
