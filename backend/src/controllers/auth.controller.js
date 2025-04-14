@@ -1,8 +1,18 @@
 import User from "../models/User.model.js";
-import sendEmail  from "../utils/sendEmail.js";
+import sendEmail from "../utils/sendEmail.js";
+import generateAccessToken from "../utils/generateAccessToken.js";
+
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
+
+//wait just found, it sets company and role on login, in some cases, look upto it whats up
+//Points to remember: when the user logs in the companyId and role against it is null
+//this way he cant perform any action until its switched, maybe keep the lastActive companyID equal to companyId when he logsIn
+
+// @route   POST /api/auth/register
+// @desc    register a user, doesn't generate accessToken
+// @access  public route
 export const registerUser = async (req, res, next) => {
   const { fullName, email, password } = req.body;
   try {
@@ -15,8 +25,9 @@ export const registerUser = async (req, res, next) => {
     const existingUser = await User.findOne({ email });
     console.log(existingUser);
     if (existingUser) {
+      // return res.status(400).json({ message: "Email already in use" });
       const error = new Error("Email already in use");
-      error.status = 400;
+      error.statusCode = 400;
       return next(error); //  Pass to error handler
     }
 
@@ -34,85 +45,110 @@ export const registerUser = async (req, res, next) => {
     }
 
     next(error); //  Pass unexpected errors to global error handler
-  } // 
+  } //
 };
 
+// @route   POST /api/auth/login
+// @desc    login user, creates refreshToken and accessToken(containing all user companies)
+// @access  public route
 export const loginUser = async (req, res, next) => {
   const { email, password } = req.body;
-  console.log(`req.body: ${req.body}`)
 
   try {
-    //check if all fields are provided
     if (!email || !password) {
       const error = new Error("All the fields are required");
       error.statusCode = 401;
-      return next(error); //  Pass to error handler
+      return next(error);
     }
 
-    //check if user exists
     const user = await User.findOne({ email }).exec();
-    console.log(`user: ${user}`)
     if (!user) {
       const error = new Error("User not found");
       error.statusCode = 401;
-      return next(error); //  Pass to error handler
+      return next(error);
     }
 
-    // 🔹 Compare Entered Password with Hashed Password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       const error = new Error("Invalid Credentials");
       error.statusCode = 401;
-      return next(error); //  Pass to error handler
+      return next(error);
     }
 
-    // Generate Access & Refresh Tokens
-    const accessToken = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "15m" }
-    );
+    // 🔸 Initialize
+    let companyEntry = null;
+    let companyId = null;
+    let role = null;
+
+    if (user.activeCompany) {
+      companyEntry = user.company.find(
+        (each) => each.companyId.toString() === user.activeCompany.toString()
+      );
+
+      if (companyEntry) {
+        companyId = companyEntry.companyId;
+        role = companyEntry.role;
+      }
+    }
+    const accessToken = generateAccessToken({
+      id: user._id,
+      role,
+      companyId
+    });
+
     const refreshToken = jwt.sign(
       { id: user._id },
       process.env.REFRESH_SECRET,
       { expiresIn: "7d" }
     );
 
-    // Store Refresh Token in DB
     user.refreshToken = refreshToken;
-    user.refreshTokenExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // Expires in 7 days
-
+    user.refreshTokenExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     await user.save();
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: "Strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      secure: process.env.NODE_ENV !== "development",
+      sameSite: "Lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    res.status(200).json({ message: "Logged In successfully!", accessToken });
-
-    
+    res.status(200).json({
+      message: "Logged In successfully!",
+      accessToken,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        companies: user.company,
+        activeCompany: user.activeCompany,
+        companyId,
+        role,
+      },
+    });
   } catch (error) {
     console.error("Login Error:", error);
     next(error);
   }
 };
+
+// @route   POST /api/auth/logout
+// @desc    clears refresh token(cookie - if have) and access token
+// @access  public route
 export const logoutUser = async (req, res, next) => {
   try {
     // 🔹 1. Get refresh token from cookies
     const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken) {
-      return res.status(400).json({ message: "Already logged out" }); // No token means already logged out
-    }
 
     // 🔹 2. Find user by refresh token
-    const user = await User.findOne({ refreshToken });
-    if (user) {
-      user.refreshToken = null; // Remove the refresh token from the database
-      user.refreshTokenExpires = null;
-      await user.save();
+    if (refreshToken) {
+      const user = await User.findOne({ refreshToken });
+
+      if (user) {
+        user.refreshToken = null;
+        user.refreshTokenExpires = null;
+        await user.save();
+      }
     }
 
     // 🔹 3. Clear refresh token cookie
@@ -122,13 +158,17 @@ export const logoutUser = async (req, res, next) => {
       sameSite: "Strict",
     });
 
-    // 🔹 4. Send success response
+    // 🔹 4. Always respond with success, even if no token
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     console.error("Logout Error:", error);
     next(error);
   }
 };
+
+// @route   POST /api/auth/refresh-token
+// @desc    refresh user token, returns new access token, doesn't change the active company
+// @access  public route
 export const refreshUserToken = async (req, res, next) => {
   try {
     // 🔹 1. Extract refresh token from cookies
@@ -140,47 +180,98 @@ export const refreshUserToken = async (req, res, next) => {
     }
 
     // 🔹 2. Verify refresh token with JWT
-    const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
-    if (!decoded) {
-      const error = new Error("Unauthorized. Please log in again.");
+    let decodedRefresh;
+    try {
+      decodedRefresh = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
+      console.log(`decodedRefresh:`, decodedRefresh);
+    } catch (err) {
+      const error = new Error("Invalid or expired refresh token.");
       error.status = 401;
       return next(error);
     }
 
-    // 🔹 3. Check if refresh token exists in the database
-    const user  = await User.findOne({ refreshToken });
-    if (!user) {
-      const error = new Error("Invalid session. Please log in again.");
+    // 🔹 4. Check if user exists and refresh token is not expired
+    const user = await User.findById(decodedRefresh.id);
+    console.log(`user:`, user);
+
+    const tokensMatch = user?.refreshToken?.trim() === refreshToken?.trim();
+    const tokenExpired = user?.refreshTokenExpires < Date.now();
+
+    if (
+      !user ||
+      !user.refreshToken ||
+      !user.refreshTokenExpires ||
+      !tokensMatch ||
+      tokenExpired
+    ) {
+      if (user) {
+        user.refreshToken = null;
+        user.refreshTokenExpires = null;
+        await user.save();
+      }
+
+      const error = new Error("Session expired. Please log in again.");
       error.status = 401;
       return next(error);
     }
 
-    // 🔹 4. Check if refresh token is expired
-    console.log(`refreshToken: ${user.refreshToken}`)
-    console.log(`user.refreshTokenExpires < Date.now(): ${user.refreshTokenExpires < Date.now()}`)
-    if (user.refreshTokenExpires < Date.now()) {
-      user.refreshToken = null; // Clear expired token
-      user.refreshTokenExpires = null;
-      await user.save();
-      const error = new Error("Invalid session. Please log in again.");
+    // 🔹 4. Decode the original access token (expired one) from Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      const error = new Error("Missing access token.");
       error.status = 401;
       return next(error);
     }
 
-    // 🔹 5. Generate new access token
-    const newAccessToken = jwt.sign(
-      { userId: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "15m" }
-    );
-    res.status(200).json({ message: "Password reset successfully" }, { accessToken: newAccessToken });
-    // res.json({ accessToken: newAccessToken }); //Send new access token
+    const expiredAccessToken = authHeader.split(" ")[1];
+    console.log(`expiredAccessToken: ${expiredAccessToken}`);
+
+    // Use ignoreExpiration to decode it even if expired
+    let decodedAccess;
+    try {
+      decodedAccess = jwt.verify(expiredAccessToken, process.env.JWT_SECRET, {
+        ignoreExpiration: true,
+      });
+      console.log("decodedAccess");
+      // console.log(decodedAccess)
+    } catch (err) {
+      const error = new Error("Invalid access token.");
+      error.status = 401;
+      return next(error);
+    }
+
+    const { companyId, role } = decodedAccess;
+
+    // 🔹 5. Generate new access token with same context
+    const accessToken = generateAccessToken({
+      id: user._id,
+      companyId,
+      role
+    });
+
+    // 🔹 6. Send new access token in response
+    res.status(200).json({
+      accessToken,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        companies: user.company,
+        activeCompany: user.activeCompany,
+        companyId,
+        role,
+      },
+    });
   } catch (error) {
     console.error("refreshUserToken Error:", error);
     next(error);
   }
 };
-export const forgotPassword = async (req, res,next) => {
+
+// @route   POST /api/auth/forgot-password
+// @desc    create a link, send email containing the link for reset password
+// @access  public route
+export const forgotPassword = async (req, res, next) => {
   const { email } = req.body;
   try {
     if (!email) {
@@ -204,7 +295,7 @@ export const forgotPassword = async (req, res,next) => {
 
     //  🔹 Send email with reset link
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
- 
+
     await sendEmail(
       user.email,
       "Password Reset",
@@ -213,7 +304,8 @@ export const forgotPassword = async (req, res,next) => {
 
     // ✅ Send success response
     res.status(200).json({
-      message: "Email sent. Check inbox", resetUrl
+      message: "Email sent. Check inbox",
+      resetUrl,
     });
   } catch (error) {
     console.error("forotPassword Error:", error);
@@ -221,6 +313,9 @@ export const forgotPassword = async (req, res,next) => {
   }
 };
 
+// @route   POST /api/auth/reset-password
+// @desc    user will click the link and bring token to reset password
+// @access  public route
 export const resetUserPassword = async (req, res, next) => {
   try {
     const { token } = req.query; // Extract token from URL
@@ -228,9 +323,9 @@ export const resetUserPassword = async (req, res, next) => {
 
     //check if neccassory fields are available
     if (!token || !newPassword) {
-        const error = new Error("All the fields are required");
-        error.statusCode = 401;
-        return next(error); //  Pass to error handler
+      const error = new Error("All the fields are required");
+      error.statusCode = 401;
+      return next(error); //  Pass to error handler
     }
 
     //Find the user with all the checks
@@ -241,7 +336,7 @@ export const resetUserPassword = async (req, res, next) => {
 
     if (!user) {
       const error = new Error("Invalid or expired reset token");
-      error.status =  400;
+      error.status = 400;
       return next(error);
     }
 

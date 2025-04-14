@@ -18,10 +18,10 @@ const sendEmail = async (to, subject, message) => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log("✅ Email sent: ", info.response);
+    console.log(" Email sent: ", info.response);
     return info;
   } catch (error) {
-    console.error("❌ Email sending error:", error);
+    console.error(" Email sending error:", error);
     throw error; // Throw error to be handled by caller
   }
 };

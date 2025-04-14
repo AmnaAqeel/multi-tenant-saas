@@ -6,7 +6,8 @@ export const rateLimiterMiddleware = rateLimit({
   keyGenerator: (req) => req.ip, // Uses IP as identifier
   message: "Too many login attempts. Try again later.",
   handler: (req, res) => {
-    if (req.ip === "127.0.0.1") {
+    if (["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(req.ip))
+      {
       return res
         .status(200)
         .json({ message: "Rate limit bypassed for localhost." });

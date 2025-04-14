@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-export default function ThemeToggle() {
+export default function ThemeToggle({className = "", className2 = ""}) {
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
 
   useEffect(() => {
@@ -9,7 +9,7 @@ export default function ThemeToggle() {
   }, [theme]);
 
   return (
-    <label className="swap swap-rotate fixed top-6 right-6 md:top-6 md:right-6 p-1 lg:p-2.5 rounded-full bg-base-100 border border-base-300 shadow-lg">
+    <label className={`swap swap-rotate ${className} `}>
       {/* Hidden checkbox controls the theme */}
       <input
         type="checkbox"
@@ -20,7 +20,7 @@ export default function ThemeToggle() {
 
       {/* Sun icon (Light mode) */}
       <svg
-        className="swap-off h-7 w-7 md:h-8 md:w-8 fill-current"
+        className={`fill-current swap-off ${className2}`}
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
       >
@@ -29,7 +29,7 @@ export default function ThemeToggle() {
 
       {/* Moon icon (Dark mode) */}
       <svg
-        className="swap-on h-7 w-7 md:h-8 md:w-8 fill-current"
+        className={`fill-current swap-on ${className2}`}
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
       >

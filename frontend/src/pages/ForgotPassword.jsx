@@ -1,9 +1,10 @@
-import { Box, Loader2 } from "lucide-react";
+import { Box, LoaderCircle } from "lucide-react";
 import { Link } from "react-router-dom";
-
 import { useState } from "react";
+
 import { useAuthStore } from "../store/useAuthStore";
 import { handleApiError } from "../utils/errorHandler";
+import { ButtonLoader } from "../components/Loader";
 
 
 const ForgotPassword = () => {
@@ -78,7 +79,7 @@ const ForgotPassword = () => {
             >
               {sendingEmail ? (
                 <>
-                  <Loader2 className="flex justify-center items-center size-5 animate-spin" />
+                  <ButtonLoader />
                 </>
               ) : (
                 "Send Reset Link"
@@ -88,7 +89,7 @@ const ForgotPassword = () => {
             <p className="mt-3 inline-block align-baseline text-sm text-base-content/70 tracking-tight">
               Remember your password?{" "}
               <Link
-                to={"/login"}
+                to={"/signin"}
                 className="font-medium text-secondary-content"
               >
                 Sign in?

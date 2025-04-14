@@ -4,7 +4,7 @@ import express from "express";
 import {validateInput} from "../middlewares/ValidateInput.middleware.js";
 import {authMiddleware} from "../middlewares/auth.middleware.js";
 import {rateLimiterMiddleware} from "../middlewares/rateLimiter.middleware.js";
-import {registerValidation, loginValidation, resetPasswordValidation, forgotPasswordValidation} from "../validations/authValidation.js";
+import {registerValidation, loginValidation, resetPasswordValidation, forgotPasswordValidation} from "../validations/auth.validation.js";
 
 //Controllers
 import { registerUser, loginUser, logoutUser, refreshUserToken, resetUserPassword, forgotPassword } from "../controllers/auth.controller.js";
@@ -12,11 +12,15 @@ import { registerUser, loginUser, logoutUser, refreshUserToken, resetUserPasswor
 const router = express.Router();
 
 // Public routes (no authentication required)
-router.post("/register", [rateLimiterMiddleware, validateInput(registerValidation)], registerUser);
+router.post("/", [rateLimiterMiddleware, validateInput(registerValidation)], registerUser);
 router.post("/login", [rateLimiterMiddleware, validateInput(loginValidation)], loginUser);
 
 // Protected routes (authentication required)
-router.post("/logout", [authMiddleware], logoutUser);
+router.get("/protected", authMiddleware, (req, res) => {
+    res.json({ message: "This is a protected route" });
+  });
+ 
+router.post("/logout", logoutUser);
 router.post("/refresh-token", refreshUserToken);
 router.post("/forgot-password", [rateLimiterMiddleware, validateInput(forgotPasswordValidation)], forgotPassword);
 router.patch("/reset-password", [ rateLimiterMiddleware, validateInput(resetPasswordValidation)], resetUserPassword);

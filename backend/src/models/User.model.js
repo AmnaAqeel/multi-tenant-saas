@@ -21,16 +21,22 @@ const UserSchema = new mongoose.Schema(
       required: [true, "Password is required"],
       minlength: [8, "Password must be at least 8 characters long"],
     },
-    tenant: [
+    activeCompany: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "company", 
+      default: null,
+    },
+    profilePicture: { type: String, default: "https://ui-avatars.com/api/?name=User&background=random&length=1" },    
+    company: [
       {
-        tenantId: {
+        companyId: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "tenant",
+          ref: "company",
         },
         role: {
           type: String,
-          enum: ["admin", "editor", "viewer"],
-          default: "viewer",
+          enum: ["admin", "editor", "member"],
+          default: "member",
         },
       },
     ],
@@ -59,6 +65,6 @@ UserSchema.methods.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-const User = mongoose.model("User", UserSchema);
+const User = mongoose.model("user", UserSchema);
 
 export default User;

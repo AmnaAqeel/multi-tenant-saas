@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAuthStore } from "../store/useAuthStore";
-import { Eye, EyeOff, Loader2 } from "lucide-react"; // Import icons
+import { Eye, EyeOff } from "lucide-react"; // Import icons
 import { handleApiError } from "../utils/errorHandler";
-
+import { ButtonLoader } from "../components/Loader";
 
 const ResetPassword = () => {
   const [passwordsMatch, setPasswordsMatch] = useState(null); //  Track match status
@@ -182,7 +182,7 @@ const ResetPassword = () => {
             disabled={isResettingPassword || TooManyAttempts}
           >
             {isResettingPassword ? (
-              <Loader2 className="size-5 animate-spin" />
+              <ButtonLoader />
             ) : (
               "Reset Password"
             )}

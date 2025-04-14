@@ -1,17 +1,19 @@
-import { Box, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Box, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
+import { ButtonLoader } from "../components/Loader";
 import { handleApiError } from "../utils/errorHandler";
 
 const Login = () => {
-  
+  // const navigate = useNavigate(); // This is valid here
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-  const { login, isLoggingIn, TooManyAttempts } = useAuthStore();
+  const { login, isLoggingIn, TooManyAttempts } =
+    useAuthStore();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,39 +25,36 @@ const Login = () => {
       if (response) {
         //  Only reset form if registration is successful
         setFormData({ email: "", password: "" });
-         //  Reset form fields
       }
     } catch (error) {
       handleApiError(error); //  Show backend errors (but don't reset form)
     }
   };
-  useEffect(() => {
-  }, [formData]); //  Logs when formData actually updates
-  
+
   return (
     <div className="grid min-h-fit place-items-center">
-      <div className="min-w-fit max-w-xs text-base-content text-center rounded-xl shadow-lg">
-        <div className="logo flex justify-center items-center mb-5 mt-5">
-          <Box className="size-10 text-secondary-content" />
+      <div className="max-w-xs text-center shadow-lg text-base-content min-w-fit rounded-xl">
+        <div className="flex items-center justify-center mt-5 mb-5 logo">
+          <Box className="text-secondary-content size-10" />
         </div>
         <div className="main-text">
           <h1 className="mb-1 text-2xl font-bold text-base-content">
             Welcome back
           </h1>
-          <p className="text-sm text-base-content/70 tracking-tight">
+          <p className="text-sm tracking-tight text-base-content/70">
             Sign in to your account
           </p>
         </div>
         <form onSubmit={handleSubmit} className="px-8 pt-6 pb-8">
           <div className="mb-4">
             <label
-              className="flex text-base-content/90 text-sm font-medium  mb-1"
+              className="flex mb-1 text-sm font-medium text-base-content/90"
               htmlFor="email"
             >
               Email
             </label>
             <input
-              className="appearance-none border border-base-content/15 rounded w-80 py-2 px-3 text-sm text-base-content/65 leading-tight focus:outline-none focus:shadow-outline shadow-none placeholder:text-base-content/30 placeholder:text-sm"
+              className="px-3 py-2 text-sm leading-tight border rounded shadow-none appearance-none border-base-content/15 text-base-content/65 focus:shadow-outline placeholder:text-base-content/30 w-80 placeholder:text-sm focus:outline-none"
               id="email"
               type="email"
               placeholder="john@example.com"
@@ -68,7 +67,7 @@ const Login = () => {
           </div>
           <div className="mb-5">
             <label
-              className="flex text-base-content/90 text-sm font-medium mb-1"
+              className="flex mb-1 text-sm font-medium text-base-content/90"
               htmlFor="password"
             >
               Password
@@ -76,7 +75,7 @@ const Login = () => {
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
-                className={`appearance-none border border-base-content/15 rounded w-80 py-2 px-3 text-sm text-base-content/65 leading-tight focus:outline-none focus:shadow-outline shadow-none placeholder:text-base-content/30 placeholder:text-sm`}
+                className={`border-base-content/15 text-base-content/65 focus:shadow-outline placeholder:text-base-content/30 w-80 appearance-none rounded border px-3 py-2 text-sm leading-tight shadow-none placeholder:text-sm focus:outline-none`}
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={(e) =>
@@ -86,13 +85,13 @@ const Login = () => {
               />
               <button
                 type="button"
-                className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
+                className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (
-                  <Eye className="h-5 w-5 text-base-content/40" />
+                  <Eye className="w-5 h-5 text-base-content/40" />
                 ) : (
-                  <EyeOff className="h-5 w-5 text-base-content/40" />
+                  <EyeOff className="w-5 h-5 text-base-content/40" />
                 )}
               </button>
             </div>
@@ -101,28 +100,29 @@ const Login = () => {
           <div className="button">
             <Link
               to={"/forgot-password"}
-              className="flex justify-end text-secondary-content align-baseline text-sm mb-3 tracking-tight"
+              className="flex justify-end mb-3 text-sm tracking-tight align-baseline text-secondary-content"
             >
               Forgot password?
             </Link>
             <button
-              className="flex justify-center items-center w-full mb-7 bg-secondary-content text-white text-sm py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline cursor-pointer hover:bg-[#4d40de] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-secondary-content focus:shadow-outline mb-7 flex w-full cursor-pointer items-center justify-center rounded-lg px-4 py-2 text-sm text-white hover:bg-[#4d40de] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               type="submit"
               disabled={isLoggingIn || TooManyAttempts}
             >
               {isLoggingIn ? (
                 <>
-                  <Loader2 className="size-5 animate-spin" />
+                  {/* <LoaderCircle className="size-5 animate-spin" /> */}
+                  <ButtonLoader />
                 </>
               ) : (
                 "Sign In"
               )}
             </button>
             <hr className="border border-base-content/15" />
-            <p className="mt-3 inline-block align-baseline text-sm text-base-content/70 tracking-tight">
+            <p className="inline-block mt-3 text-sm tracking-tight align-baseline text-base-content/70">
               Don't have an account?{" "}
               <Link
-                to={"/register"}
+                to={"/signup"}
                 className="font-medium text-secondary-content"
               >
                 Sign up?

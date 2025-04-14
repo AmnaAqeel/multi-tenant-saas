@@ -1,11 +1,15 @@
-import { Box, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Box, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
 import { toast } from "sonner";
 import { handleApiError } from "../utils/errorHandler";
+import { ButtonLoader } from "../components/Loader";
+
 
 const Register = () => {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
@@ -36,7 +40,7 @@ const Register = () => {
 
    try {
     //  Wait for the API call to complete
-    const response = await register(formData);
+    const response = await register(formData, navigate);
     
     if (response) { //  Only reset form if registration is successful
       setFormData({ fullName: "", email: "", password: "" }); //  Reset form fields
@@ -137,7 +141,7 @@ const Register = () => {
               >
                 {isRegistering ? (
                   <>
-                    <Loader2 className="flex justify-center items-center size-5 animate-spin" />
+                    <ButtonLoader />
                   </>
                 ) : (
                   "Create Account"
@@ -147,7 +151,7 @@ const Register = () => {
               <p className="mt-3 inline-block align-baseline text-sm text-base-content/70 tracking-tight">
                 Already have an account?{" "}
                 <Link
-                  to={"/login"}
+                  to={"/signin"}
                   className="font-medium text-secondary-content"
                 >
                   Sign In?

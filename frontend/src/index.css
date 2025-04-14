@@ -1,12 +1,15 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap');
 @import "tailwindcss";
+
 @plugin "daisyui";
+
 
 @plugin "daisyui/theme" {
   name: "light"; /* Customizing the built-in light theme */
   default: true;
 
-  --color-primary: #4f46e5; /* button bg */
+  --color-primary: #2563eb; /* button bg */
 
   --color-secondary: #e0e7ff; /* indigo */
   --color-secondary-content: #4f46e5;
@@ -25,12 +28,19 @@
 
   --color-success: #d1fae5; /* green */
   --color-success-content: #047857;
+
+  --color-neutral: #eff6ff; /* active-blue */
 }
 
 @plugin "daisyui/theme" {
   name: "dark"; /* Customizing the built-in dark theme */
   default: true;
 
+  --color-primary: #2563eb; /* button bg */
+  
+  /* --color-primary: #2563eb; */
+   /* button bg */
+
   --color-secondary: #e0e7ff; /* indigo */
   --color-secondary-content: #4f46e5;
 
@@ -48,6 +58,8 @@
 
   --color-success: #d1fae5; /* green */
   --color-success-content: #047857;
+
+  --color-neutral: #1e293b; /* active-blue */
 }
 
 @plugin "daisyui/theme" {
@@ -79,6 +91,7 @@
     --green: var(--color-success);
     --green-content: var(--color-success-content);
 
+    --active-blue: var(--color-neutral);
   }
 
   /* Dark Mode */
@@ -101,6 +114,8 @@
 
     --green: var(--color-success);
     --green-content: var(--color-success-content);
+
+    --active-blue: var(--color-neutral);
   }
 
   /* Define Tailwind-Like Utility Classes */
@@ -122,7 +137,14 @@
   .text-green {
     color: var(--green-content);
   }
+  .text-active-blue {
+    background-color: var(--active-blue);
+  }
 
+
+  .bg-active-blue {
+    background-color: var(--active-blue);
+  }
   .bg-indigo {
     background-color: var(--indigo);
   }
@@ -145,4 +167,15 @@
 
 body {
   font-family: "Inter", sans-serif;
+}
+
+html.modal-open {
+  overflow: hidden;
+  padding-right: var(--scrollbar-width, 0px);
+  transition: padding-right 0.2s ease-in-out;
+}
+
+/* Optional: Prevent horizontal shift during modal open/close */
+html {
+  scrollbar-gutter: auto;
 }
