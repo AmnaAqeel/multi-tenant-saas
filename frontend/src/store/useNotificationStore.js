@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 export const useNotificationStore = create((set, get) => ({
   notification: [],
+  UnreadNotifications: [],
   filteredNotification: [],
   newNotification: false, //for navbar
   hasNewNotification: false, //for sidebar
@@ -20,6 +21,12 @@ export const useNotificationStore = create((set, get) => ({
       filteredNotification: notificationsArray,
       loading: false,
     })),
+
+  setUnreadNotifications: () => {
+    const { notification } = get(); // get latest state
+    const unread = notification.filter((n) => !n.read);
+    set({ UnreadNotifications: unread });
+  },
 
   addNotification: (newNotif) =>
     set((state) => {
@@ -36,11 +43,14 @@ export const useNotificationStore = create((set, get) => ({
   markAsRead: async (id) => {
     try {
       // Make sure to send credentials for cookies
-      const response = await axiosInstance.patch(`/notifications/${id}/read`, {});
+      const response = await axiosInstance.patch(
+        `/notifications/${id}/read`,
+        {},
+      );
       console.log("markasRead response:", response);
 
-      if(response){
-        toast.success("Marked as read")
+      if (response) {
+        toast.success("Marked as read");
       }
 
       return true;
@@ -53,11 +63,14 @@ export const useNotificationStore = create((set, get) => ({
   markAllAsRead: async () => {
     try {
       // Make sure to send credentials for cookies
-      const response = await axiosInstance.patch(`/notifications//mark-all-read`, {});
+      const response = await axiosInstance.patch(
+        `/notifications//mark-all-read`,
+        {},
+      );
       console.log("markAllRead response:", response);
 
-      if(response){
-        toast.success("All marked as read")
+      if (response) {
+        toast.success("All marked as read");
       }
 
       return true;
@@ -73,8 +86,8 @@ export const useNotificationStore = create((set, get) => ({
       const response = await axiosInstance.delete(`/notifications/${id}`, {});
       console.log("Notfication delete response:", response);
 
-      if(response){
-        toast.success("Notification removed succesfully!")
+      if (response) {
+        toast.success("Notification removed succesfully!");
       }
 
       return true;
@@ -82,6 +95,44 @@ export const useNotificationStore = create((set, get) => ({
       console.error("Notfication delete:", error);
       handleApiError(error);
       return false;
+    }
+  },
+  fetchNotifications: async (projectId) => {
+    if (!projectId) return []; // Defensive check for undefined
+    try {
+      const response = await axiosInstance.get(
+        `/notifications/project/${projectId}`,
+      );
+      console.log("RESPONSE FROM USE_NOTIFICATION_STORE:", response);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      handleApiError(error);
+      return [];
+    }finally{
+      set({ loading: false });
+    }
+  },
+  createAnnouncementApi : async (message) => {
+    try {
+      const response = await axiosInstance.post(`/notifications/announcement`, { message });
+      console.log("response:", response);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      handleApiError(error);
+      return false;
+    }   
+  },
+  fetchSystemAnnouncements : async () => {
+    try {
+      const response = await axiosInstance.get(`/notifications/announcement`);
+      console.log("System Notifications:", response);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      handleApiError(error);
+      return [];
     }
   },
 }));

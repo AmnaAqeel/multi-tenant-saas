@@ -3,10 +3,56 @@ import Task from "../models/Tasks.model.js";
 import mongoose from "mongoose";
 import { sendNotificationAndEmit } from "../utils/sendNotificationAndEmit.js";
 
+
+// TODO: the Editor can create projects and tasks and admin won't be a part of them and currently admin cant
+//  see them either with this setup
+
+// @route   GET /api/projects/tasks
+// @desc    List all tasks of a user against his selected company
+// @access  Authorized only
+export const getTasks = async (req, res, next) => {
+  console.log("get Tasks api was hit...")
+  const { _id } = req.user; // Get the user ID from the request object
+  const {companyId} = req.user;
+
+  if (!mongoose.Types.ObjectId.isValid(_id)) {
+    return res.status(400).json({ success: false, message: "Invalid user ID" });
+  }
+
+  try {
+    const tasks = await Task.find({
+      $and: [
+        {
+          $or: [{ "assignedTo.userId": _id }, { createdBy: _id }],
+        },
+        { companyId: companyId } // Add the companyId condition here
+      ]
+    })
+    .populate("assignedTo.userId", "fullName email profilePicture")
+    .populate("project", "title isArchived")
+    .populate("comments.user", "fullName email profilePicture");
+
+    console.log("tasks:", tasks);
+    console.log("id:", _id);
+
+    res.status(200).json({
+      success: true,
+      message: tasks.length
+        ? `Fetched ${tasks.length} tasks assigned to you.`
+        : "No tasks assigned to you yet.",
+      data: tasks,
+    });
+  } catch (error) {
+    console.error("Error fetching tasks:", error);
+    next(error);
+  }
+};
+
 // @route   GET /api/projects/:projectId/tasks
 // @desc    List all tasks of a specific project (admin only)
 // @access  Authorized only
 export const getAllTasks = async (req, res, next) => {
+  console.log("entering getAllTasks");
   const { projectId } = req.params;
   const { status, priority } = req.query; // Optional query parameters for filtering
 
@@ -26,7 +72,9 @@ export const getAllTasks = async (req, res, next) => {
       filter.priority = priority;
     }
 
-    const tasks = await Task.find(filter);
+    const tasks = await Task.find(filter)
+    .populate("assignedTo.userId", "fullName email profilePicture")
+    console.log("tasks:", tasks);
     res.status(200).json(tasks);
   } catch (error) {
     console.error("Error fetching tasks:", error);
@@ -39,7 +87,8 @@ export const getAllTasks = async (req, res, next) => {
 // @access  Admin and Project Manager
 export const createTask = async (req, res, next) => {
   const { projectId } = req.params;
-  const { title, description, assignedTo, priority, status } = req.body;
+  const { title, description, assignedTo, priority, status, dueDate } =
+    req.body;
 
   try {
     const projectData = await Project.findById(projectId);
@@ -65,6 +114,7 @@ export const createTask = async (req, res, next) => {
       priority: priority || "medium",
       status: status || "to-do",
       project: projectId,
+      dueDate: dueDate || null,
       assignedTo: assignedTo.map((userObj) => ({
         userId: new mongoose.Types.ObjectId(userObj.userId),
       })),
@@ -80,6 +130,7 @@ export const createTask = async (req, res, next) => {
         message: `You have been assigned a new task: "${title}" in the project "${projectData.title}"`,
         type: "task_assigned",
         companyId: projectData.company,
+        projectId,
         createdBy: req.user._id,
       });
     }
@@ -105,7 +156,13 @@ export const getTaskById = async (req, res, next) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    const task = await Task.findOne({ _id: taskId, project: projectId });
+    const task = await Task.findOne({
+      _id: taskId,
+      project: projectId,
+    }).populate("assignedTo.userId", "fullName email profilePicture")
+    .populate("comments.user", "fullName email profilePicture")
+
+
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
@@ -122,7 +179,7 @@ export const getTaskById = async (req, res, next) => {
 // @access  Admin and Project Manager
 export const updateTask = async (req, res, next) => {
   const { projectId, taskId } = req.params;
-  const { title, description, priority, status, parentTask } = req.body;
+  const { title, description, priority } = req.body;
 
   try {
     const project = await Project.findById(
@@ -140,8 +197,6 @@ export const updateTask = async (req, res, next) => {
     task.title = title || task.title;
     task.description = description || task.description;
     task.priority = priority || task.priority;
-    task.status = status || task.status;
-    task.parentTask = parentTask || task.parentTask;
     task.updatedAt = new Date();
 
     await task.save();
@@ -157,7 +212,7 @@ export const updateTask = async (req, res, next) => {
 // @access  Assigned users
 //POINT to remember, the company admin is still not allowed to update task status, because he isnt among the team member array of tasks
 export const updateTaskStatus = async (req, res, next) => {
-  const { taskId } = req.params;
+  const { projectId, taskId } = req.params;
   const { status } = req.body; // Just the status field here
   const { role, _id: userId, companyId } = req.user;
 
@@ -209,6 +264,7 @@ export const updateTaskStatus = async (req, res, next) => {
         message: `${req.user.fullName} changed the status of task "${task.title}" from "${oldStatus}" to "${status}".`,
         type: "task_status_changed",
         companyId: companyId,
+        projectId,
         createdBy: userId,
       });
     }
@@ -253,6 +309,7 @@ export const updateTaskMembers = async (req, res, next) => {
           message: `You have been added to the task: "${task.title}".`,
           type: "task_assigned",
           companyId: req.user.companyId,
+          projectId,
           createdBy: req.user._id,
         });
       }
@@ -306,6 +363,7 @@ export const deleteTask = async (req, res, next) => {
 // @desc    Get all subtasks for a task
 // @access  Authorized only.
 export const getAllSubtasksForTask = async (req, res, next) => {
+  console.log("req.params", req.params);
   const { projectId, taskId } = req.params;
 
   const projectObjId = new mongoose.Types.ObjectId(projectId);
@@ -328,8 +386,9 @@ export const getAllSubtasksForTask = async (req, res, next) => {
 // @desc    Add a subtask to a task
 // @access  Authorized only
 export const addSubtask = async (req, res, next) => {
+  console.log("req.body:", req.body);
   const { projectId, taskId } = req.params;
-  const { title, status } = req.body;
+  const { title } = req.body;
 
   if (!title) {
     return res.status(400).json({ msg: "Title is required for subtask" });
@@ -345,13 +404,16 @@ export const addSubtask = async (req, res, next) => {
 
     const newSubtask = {
       title,
-      status: status || "to-do",
+      status: "to-do",
     };
 
     task.subtasks.push(newSubtask);
     await task.save();
 
-    res.status(201).json(task.subtasks); // Return all subtasks
+    // get the subtask that *was just added*
+    const addedSubtask = task.subtasks[task.subtasks.length - 1];
+
+    res.status(201).json(addedSubtask); // Return newly created subtasks
   } catch (error) {
     console.error("Error adding subtask:", error);
     next(error);
@@ -362,8 +424,9 @@ export const addSubtask = async (req, res, next) => {
 // @desc    Update a subtask inside a task
 // @access  Authorized only
 export const updateSubtask = async (req, res, next) => {
+  console.log("req.body:", req.body);
   const { projectId, taskId, subtaskId } = req.params;
-  const { title, status } = req.body;
+  const { status } = req.body;
 
   const projectObjId = new mongoose.Types.ObjectId(projectId);
 
@@ -378,8 +441,7 @@ export const updateSubtask = async (req, res, next) => {
     if (!subtask) {
       return res.status(404).json({ message: "Subtask not found" });
     }
-
-    if (title) subtask.title = title;
+    console.log("status:", status);
     if (status) subtask.status = status;
 
     await task.save();
@@ -486,6 +548,7 @@ export const addCommentToTask = async (req, res, next) => {
         message: `New comment on a task you're assigned to: "${taskTitle}"`,
         type: "new_comment",
         companyId,
+        projectId,
         createdBy,
       });
     }
@@ -498,11 +561,14 @@ export const addCommentToTask = async (req, res, next) => {
         message: `New comment on your created task: "${taskTitle}"`,
         type: "new_comment",
         companyId,
+        projectId,
         createdBy,
       });
-    }
+    } 
+    await task.populate("comments.user", "fullName email profilePicture");
+    const addedComment = task.comments.at(-1); // cleaner and modern
 
-    res.status(201).json(newComment);
+    res.status(201).json(addedComment);
   } catch (error) {
     console.error("Error adding comment:", error);
     next(error);

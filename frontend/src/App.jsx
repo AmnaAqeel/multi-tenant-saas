@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 import {
   BrowserRouter as Router,
@@ -15,13 +16,17 @@ import ResetPassword from "./pages/ResetPassword";
 
 //Dashboard pages
 import Dashboard from "./pages/Dashboard";
-import Projects from "./pages/Projects";
 import CompanyInvite from "./pages/CompanyInvite";
+import Projects from "./pages/Projects";
+import ProjectDetailPage from "./pages/ProjectDetailPage";
+import EditProjectPage from "./pages/EditProjectPage";
 import Tasks from "./pages/Tasks";
+import TasksDetailPage from "./pages/TasksDetailPage";
 import TeamMembers from "./pages/TeamMembers";
 import Notifications from "./pages/Notifications";
 import Archive from "./pages/Archive";
 import Settings from "./pages/Settings";
+import Invites from "./pages/Invites";
 
 //Layouts
 import AuthLayout from "./layout/AuthLayout";
@@ -34,31 +39,52 @@ import { useSocketStore } from "./store/useSocketStore";
 import { Loader } from "./components/Loader";
 import { Toaster } from "sonner";
 
+
 export default function App() {
+  const location = useLocation();
+  const publicRoutes = ["/company-invite"];
+
+  const isPublicRoute = publicRoutes.some((route) =>
+    location.pathname.startsWith(route),
+  );
+
   const { checkAuth, authUser, accessToken, isCheckingAuth, hasCheckedAuth } =
     useAuthStore();
-  const { connect } = useSocketStore();
 
   //  you're using JWTs with refresh tokens, and the access token is stored in memory (via Zustand). When the user refreshes the page or reopens the browser:
   useEffect(() => {
     // Check if user is already logged in and update the state
     console.log("checkAuth() ran");
-    checkAuth();
-  }, [checkAuth]);
-  
+    console.log("authUser:", authUser);
+
+    if (!isPublicRoute) {
+      checkAuth(); //  Run only for protected routes
+    } else {
+      console.log("Skipping auth for:", location.pathname);
+    }
+  }, [checkAuth, location]);
+
   useEffect(() => {
     const accessToken = useAuthStore.getState().accessToken;
     console.log("The updated accessToken is:", accessToken);
 
-    if (accessToken) {
+    if (!isPublicRoute && accessToken) {
       useSocketStore.getState().connect();
+    } else {
+      console.log(
+        "Skipping socket connect on public route:",
+        location.pathname,
+      );
     }
-  }, [useAuthStore.getState().accessToken]); // Re-run this effect when the token changes
+  }, [accessToken, location]); // Re-run this effect when the token changes
 
-  if (isCheckingAuth || !hasCheckedAuth) return <Loader />;
+  // Skip the loader for public routes
+  if (!isPublicRoute && (isCheckingAuth || !hasCheckedAuth)) {
+    return <Loader />;
+  }
 
   return (
-    <Router>
+    <>
       <Routes>
         {/* Auth Pages Wrapped Inside AuthLayout */}
         <Route element={<AuthLayout />}>
@@ -83,11 +109,15 @@ export default function App() {
             <Route element={<DashboardLayout />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/projects" element={<Projects />} />
+              <Route path="/projects/:id" element={<ProjectDetailPage />} />
+              <Route path="/projects/edit/:id" element={<EditProjectPage />} />
+              <Route path="/tasks/:taskId" element={<TasksDetailPage />} />
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/team" element={<TeamMembers />} />
               <Route path="/notifications" element={<Notifications />} />
-              <Route path="/archive" element={<Archive />} />
+              <Route path="/archives" element={<Archive />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/invites" element={<Invites />} />
             </Route>
           </Route>
         </Route>
@@ -98,6 +128,6 @@ export default function App() {
       </Routes>
 
       <Toaster position="bottom-right" />
-    </Router>
+    </>
   );
 }

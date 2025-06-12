@@ -15,6 +15,7 @@ export const roleMiddleware = (...allowedRoles) => (req, res, next) => {
 
 //Things to keep in Mind: We are assigning editor to those we are going to make project members only, rest will be members
 export const projectRoleMiddleware = (...allowedRoles) => async (req, res, next) => {
+  console.log("PROJECT ROLE MIDDLEWARE TRIGGERED")
   if (!req.user || !req.user.role) {
     return res.status(403).json({ message: "Access denied. No role assigned." });
   }

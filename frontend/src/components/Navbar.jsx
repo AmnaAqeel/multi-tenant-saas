@@ -4,6 +4,7 @@ import {
   Search,
   Settings,
   UserRound,
+  UserPlus,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
@@ -14,19 +15,29 @@ import { useAuthStore } from "../store/useAuthStore";
 import { useCompanyStore } from "../store/useCompanyStore";
 import { useNotificationStore } from "../store/useNotificationStore";
 
-import { ButtonLoader } from "../components/Loader";
+import CreateCompanyModal from "./CreateCompanyModal";
+import SwitchCompanyModal from "./SwitchCompanyModal";
+import CompanyInviteModal from "./InviteUserModal";
 
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
-const Navbar = () => {
-  const { logout } = useAuthStore();
-  const { registerCompany, isRegisteringCompany, showSearch, setShowSearch } =
-    useCompanyStore();
-  const { notification, newNotification, setNewNotification } = useNotificationStore();
+const Navbar = ({ setShowSwitchModal, showSwitchModal }) => {
+  const { logout, authUser } = useAuthStore();
+  const { showSearch, setShowSearch } = useCompanyStore();
+  const {
+    notification,
+    newNotification,
+    setNewNotification,
+    filteredNotification,
+  } = useNotificationStore();
+
   const searchRef = useRef(null);
   const inputRef = useRef(null);
   const navigate = useNavigate();
+
+  const [showCompanyModal, setShowCompanyModal] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   //  First add state at the component level
@@ -39,39 +50,6 @@ const Navbar = () => {
       newState[index] = !newState[index];
       return newState;
     });
-  };
-  const [companyData, setCompanyData] = useState({
-    name: "",
-    logo: null,
-    description: "",
-    location: "",
-    website: "",
-    employees: "",
-  });
-
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0]; // Get selected file
-    if (!file) return; // If no file, exit
-
-    if (file.size > 1024 * 1024) {
-      // 1MB
-      toast.error("File too large");
-      return;
-    }
-
-    const reader = new FileReader(); // Create FileReader
-    reader.readAsDataURL(file); // Read file as Base64
-
-    reader.onload = async () => {
-      // Wait for file to finish loading
-      const base64Image = reader.result; // Store Base64 data
-
-      // Update state with Base64 data
-      setCompanyData((prevData) => ({
-        ...prevData,
-        logo: base64Image,
-      }));
-    };
   };
 
   const handleSearch = (e) => {
@@ -90,29 +68,6 @@ const Navbar = () => {
         toast.error("Invalid URL format! Please enter a proper invite link.");
       }
     }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    // Add actual form submission logic here (API call, toast, etc.)
-    if (!companyData.name || !companyData.description) {
-      toast.error("All fields are required");
-      return;
-    }
-
-    const response = await registerCompany(companyData);
-    if (response) {
-      document.getElementById("my_modal_1").close();
-    }
-    // Optional: Reset form and close modal
-    setCompanyData({
-      name: "",
-      logo: null,
-      description: "",
-      location: "",
-      website: "",
-      employees: "",
-    });
   };
 
   useEffect(() => {
@@ -139,13 +94,18 @@ const Navbar = () => {
       window.removeEventListener("click", handleClickOutside);
     };
   }, [showSearch]);
+
+  useEffect(() => {
+    const hasUnread = filteredNotification.some((n) => !n.read);
+    setNewNotification(hasUnread);
+  }, [filteredNotification, setNewNotification]);
   return (
     <>
       {/* Navbar */}
       <div className="border-base-content/15 navbar h-10 w-full items-center justify-between border-b">
         {/* Search bar P1*/}
         <div
-          className={`searchbar border-base-content/15 relative ml-12 flex w-85 rounded-md border-0 md:border ${showSearch ? "block border-2 border-amber-100" : ""}`}
+          className={`searchbar border-base-content/15 relative ml-8 flex w-85 rounded-md border-0 md:ml-4 md:border ${showSearch ? "block border-2 border-amber-100" : ""}`}
           ref={searchRef}
         >
           {showSearch && (
@@ -189,12 +149,8 @@ const Navbar = () => {
             <div className="dropdown dropdown-bottom dropdown-end hidden items-center justify-center md:flex">
               <div
                 tabIndex={0}
-                onFocus={() => setNewNotification(false)}
                 role="button"
-                className="text-base-content/55 hover:text-base-content/40 relative inline-flex items-center text-center text-sm font-medium focus:outline-none"
-                onClick={() => {
-                  setNewNotification(false)
-                }}
+                className="text-base-content/55 hover:text-base-content/40 relative inline-flex cursor-pointer items-center text-center text-sm font-medium focus:outline-none"
               >
                 {" "}
                 <svg
@@ -212,7 +168,7 @@ const Navbar = () => {
               </div>
               <ul
                 tabIndex={0}
-                className="dropdown-content menu bg-base-100 z-10 mt-2 w-80 overflow-hidden rounded-lg shadow-lg"
+                className="dropdown-content menu bg-base-100 z-10 w-80 overflow-hidden rounded-lg shadow-lg"
               >
                 <div className="menu-title text-base-content p-4 pb-2 font-semibold">
                   Notifications
@@ -225,7 +181,9 @@ const Navbar = () => {
                       className="hover:bg-neutral/10 border-base-200 cursor-pointer border-b px-4 py-3 transition last:border-0"
                       onClick={() => handleToggle(index)}
                     >
-                      <div className="w-full flex-1">
+                      <div
+                        className={`w-full flex-1 ${each.read ? "bg-base-100" : "bg-primary/7"}`}
+                      >
                         <div
                           className={`text-base-content text-sm font-medium ${
                             expandedNotifications[index] ? "" : "line-clamp-2"
@@ -256,7 +214,12 @@ const Navbar = () => {
             {/* Profile-menu */}
             <div className="profile-dropdown flex items-center justify-center md:gap-x-1">
               {/* Profile rounded */}
-              <div className="size-8 rounded-full bg-black md:size-7.5"></div>
+              <div className="size-8 overflow-hidden rounded-full bg-pink-100 md:size-7.5">
+                <img
+                  src={authUser.profilePicture}
+                  className="size-8 rounded-full"
+                />
+              </div>
 
               {/* menu dropdown */}
               <div className="dropdown dropdown-bottom dropdown-end md:block">
@@ -276,32 +239,27 @@ const Navbar = () => {
                   {/* Profile Header */}
                   <div className="border-base-content/15 space-y-0.5 border-b px-3 py-2 text-sm">
                     <div className="text-base-content font-medium">
-                      Bonnie Green
+                      {authUser.name}
                     </div>
                     <div className="text-base-content/70 truncate text-xs">
-                      name@flowbite.com
+                      {authUser.email}
                     </div>
                   </div>
 
                   {/* Menu Items */}
+
+                  {/* profile */}
                   <div className="border-base-content/15 mt-1 border-b">
-                    <li role="menuitem" className="hover:bg-base-200">
+                    {/* <li role="menuitem" className="hover:bg-base-200">
                       <Link
                         to="/profile"
                         className="flex items-center gap-2 text-sm"
                       >
                         <UserRound className="size-4" /> Profile
                       </Link>
-                    </li>
-                    <li role="menuitem" className="hover:bg-base-200">
-                      <Link
-                        to="/settings"
-                        className="flex items-center gap-2 text-sm"
-                      >
-                        <Settings className="size-4" />
-                        Settings
-                      </Link>
-                    </li>
+                    </li> */}
+
+                    {/* New Company */}
                     <li role="menuitem" className="hover:bg-base-200">
                       <button
                         className="flex items-center gap-1.5 text-sm"
@@ -313,7 +271,7 @@ const Navbar = () => {
                             "--scrollbar-width",
                             `${scrollbarWidth}px`,
                           );
-                          document.getElementById("my_modal_1").showModal();
+                          setShowCompanyModal(true);
                         }}
                       >
                         <span className="material-symbols-outlined !text-[20px]">
@@ -322,13 +280,46 @@ const Navbar = () => {
                         New Company
                       </button>
                     </li>
+
+                    {/* Switch Company */}
                     <li role="menuitem" className="hover:bg-base-200">
-                      <Link
-                        to="/switch-company"
+                      <button
                         className="flex items-center gap-2 text-sm"
+                        onClick={() => setShowSwitchModal(true)}
                       >
                         <ArrowLeftRight className="size-4" />
                         Switch Company
+                      </button>
+                    </li>
+
+                    {/* Invite User */}
+                    <li role="menuitem" className="hover:bg-base-200">
+                      <button
+                        className="flex items-center gap-2 text-sm"
+                        onClick={() => {
+                          const scrollbarWidth =
+                            window.innerWidth -
+                            document.documentElement.clientWidth;
+                          document.documentElement.style.setProperty(
+                            "--scrollbar-width",
+                            `${scrollbarWidth}px`,
+                          );
+                          setShowInviteModal(true);
+                        }}
+                      >
+                        <UserPlus className="size-4" />
+                        Invite User
+                      </button>
+                    </li>
+
+                    {/* settings */}
+                    <li role="menuitem" className="hover:bg-base-200">
+                      <Link
+                        to="/settings"
+                        className="flex items-center gap-2 text-sm"
+                      >
+                        <Settings className="size-4" />
+                        Settings
                       </Link>
                     </li>
                   </div>
@@ -354,155 +345,20 @@ const Navbar = () => {
 
       {/* Modal */}
       {/* Open the modal using document.getElementById('ID').showModal() method */}
+      <CreateCompanyModal
+        isOpen={showCompanyModal}
+        onClose={() => setShowCompanyModal(false)}
+      />
 
-      <dialog
-        id="my_modal_1"
-        className="modal"
-        onCancel={(e) => e.preventDefault()}
-        onClose={() => {
-          document.documentElement.style.removeProperty("--scrollbar-width");
-        }}
-      >
-        <div className="modal-box w-full max-w-xl sm:w-11/12">
-          <h3 className="mb-4 text-xl font-bold">Create a New Company</h3>
+      <SwitchCompanyModal
+        isOpen={showSwitchModal}
+        onClose={() => setShowSwitchModal(false)}
+      />
 
-          {/* --- Start of Form --- */}
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            {/* Company Name */}
-            <div>
-              <label className="label">
-                <span className="label-text">Company Name *</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered w-full focus:outline-none"
-                placeholder="e.g. Acme Inc."
-                value={companyData.name}
-                onChange={(e) =>
-                  setCompanyData({ ...companyData, name: e.target.value })
-                }
-                required
-              />
-            </div>
-
-            {/* Logo */}
-            <div>
-              <label className="label">
-                <span className="label-text">Logo (optional)</span>
-              </label>
-              <input
-                type="file"
-                className="file-input file-input-bordered w-full focus:outline-none"
-                accept="image/*"
-                onChange={handleImageUpload}
-              />
-            </div>
-
-            {/* Description */}
-            <div>
-              <label className="label">
-                <span className="label-text">Description</span>
-              </label>
-              <textarea
-                className="textarea textarea-bordered w-full focus:outline-none"
-                required
-                placeholder="e.g. We specialize in project collaboration..."
-                value={companyData.description}
-                onChange={(e) =>
-                  setCompanyData({
-                    ...companyData,
-                    description: e.target.value,
-                  })
-                }
-              />
-            </div>
-
-            {/* Location */}
-            <div>
-              <label className="label">
-                <span className="label-text">Location</span>
-              </label>
-              <input
-                type="text"
-                required
-                className="input input-bordered w-full focus:outline-none"
-                placeholder="e.g. San Francisco, CA"
-                value={companyData.location}
-                onChange={(e) =>
-                  setCompanyData({ ...companyData, location: e.target.value })
-                }
-              />
-            </div>
-
-            {/* Website URL */}
-            <div>
-              <label className="label">
-                <span className="label-text">Website URL</span>
-              </label>
-              <input
-                type="url"
-                className="input input-bordered w-full focus:outline-none"
-                placeholder="https://yourcompany.com"
-                value={companyData.website}
-                onChange={(e) =>
-                  setCompanyData({ ...companyData, website: e.target.value })
-                }
-                pattern="^(https?:\/\/)?([\w\-]+\.)+[a-z]{2,}(\/\S*)?$"
-                title="Please enter a valid URL (e.g., https://example.com)"
-              />
-            </div>
-
-            {/* Employees */}
-            <div>
-              <label className="label">
-                <span className="label-text">Number of Employees</span>
-              </label>
-              <select
-                className="select select-bordered w-full focus:outline-none"
-                value={companyData.employees}
-                onChange={(e) =>
-                  setCompanyData({ ...companyData, employees: e.target.value })
-                }
-              >
-                <option disabled value="">
-                  Select Range
-                </option>
-                {["1-10", "11-50", "51-200", "201-500", "500+"].map((range) => (
-                  <option key={range} value={range}>
-                    {range}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Footer */}
-            <div className="modal-action">
-              <button
-                type="button"
-                className="btn transform transition duration-200 hover:scale-105"
-                onClick={() => document.getElementById("my_modal_1").close()}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="btn btn-primary transform transition duration-200 hover:scale-103"
-                disabled={isRegisteringCompany}
-              >
-                {isRegisteringCompany ? (
-                  <>
-                    <ButtonLoader />
-                    Creating...
-                  </>
-                ) : (
-                  "Create"
-                )}
-              </button>
-            </div>
-          </form>
-          {/* --- End of Form --- */}
-        </div>
-      </dialog>
+      <CompanyInviteModal
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+      />
     </>
   );
 };

@@ -29,7 +29,6 @@ const ResetPassword = () => {
     });
   };
   
-  
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -65,12 +64,13 @@ const ResetPassword = () => {
       }
 
       //  Set cooldown before allowing another request
-      setTimeout(() => setIsDisabled(false), 200000); // 20 seconds cooldown to 2 mins
+      setTimeout(() => setIsDisabled(false), 20000); // 20 seconds cooldown to 2 mins
     } catch (error) {
       handleApiError(error);
       setIsDisabled(false); //  Re-enable button if request fails
     }
   };
+
 
   return (
     <div className="grid min-h-fit place-items-center">

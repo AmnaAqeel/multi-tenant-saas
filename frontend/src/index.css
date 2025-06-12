@@ -23,13 +23,16 @@
   --color-warning: #fef3c7; /* yellow */
   --color-warning-content: #92400e;
 
-  --color-error: #ffedd5; /* orange */
-  --color-error-content: #c2410c;
+  --color-error: #fee2e2; /* red */
+  --color-error-content: #b91c1c;
 
   --color-success: #d1fae5; /* green */
   --color-success-content: #047857;
 
   --color-neutral: #eff6ff; /* active-blue */
+
+  --color-orange: #ffedd5;
+  --color-orange-content: #c2410c;
 }
 
 @plugin "daisyui/theme" {
@@ -53,13 +56,16 @@
   --color-warning: #fef3c7; /* yellow */
   --color-warning-content: #92400e;
 
-  --color-error: #ffedd5; /* orange */
-  --color-error-content: #c2410c;
+  --color-error: #fee2e2; /* red */
+  --color-error-content: #b91c1c; 
 
   --color-success: #d1fae5; /* green */
   --color-success-content: #047857;
 
   --color-neutral: #1e293b; /* active-blue */
+
+  --color-orange: #ffedd5;
+  --color-orange-content: #c2410c;
 }
 
 @plugin "daisyui/theme" {
@@ -85,8 +91,11 @@
     --yellow: var(--color-warning);
     --yellow-content: var(--color-warning-content);
 
-    --orange: var(--color-error);
-    --orange-content: var(--color-error-content);
+    --red: var(--color-error);
+    --red-content: var(--color-error-content);
+
+    --orange: var(--color-orange);
+    --orange-content: var(--color-orange-content);
 
     --green: var(--color-success);
     --green-content: var(--color-success-content);
@@ -109,8 +118,11 @@
     --yellow: var(--color-warning);
     --yellow-content: var(--color-warning-content);
 
-    --orange: var(--color-error);
-    --orange-content: var(--color-error-content);
+    --red: var(--color-error);
+    --red-content: var(--color-error-content);
+
+    --orange: var(--color-orange);
+    --orange-content: var(--color-orange-content);
 
     --green: var(--color-success);
     --green-content: var(--color-success-content);
@@ -130,6 +142,9 @@
   }
   .text-yellow {
     color: var(--yellow-content);
+  }
+  .text-red {
+    color: var(--orange-content);
   }
   .text-orange {
     color: var(--orange-content);
@@ -158,6 +173,9 @@
     background-color: var(--yellow);
   }
   .bg-orange {
+    background-color: var(--orange);
+  }
+  .bg-red {
     background-color: var(--orange);
   }
   .bg-green {

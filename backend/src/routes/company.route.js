@@ -8,7 +8,7 @@ import {
   getCompanyById,
   getCompanyMembers,
   removeMember,
-  changeMemberRole,
+  updateMultipleMemberRoles,
   updateCompany,
   deleteCompany,
   leaveCompany
@@ -21,15 +21,15 @@ const router = express.Router();
 //Core Company Routes
 router.post("/", authMiddleware, validateInput(createCompanyValidation), createCompany);
 router.get("/my", authMiddleware, getUserCompanies);
-router.patch("/switch", authMiddleware, switchCompany);
+router.patch("/switch/:id", authMiddleware, switchCompany);
 router.get("/:id", authMiddleware, roleMiddleware("admin"), getCompanyById);
 
 //  Essential basic team management Routes
-router.get("/:id/members", authMiddleware, roleMiddleware("admin"), getCompanyMembers);
+router.get("/:id/members", authMiddleware, getCompanyMembers);
 router.delete("/:id/members/:userId",authMiddleware,roleMiddleware("admin"),removeMember);
 
 //Deep Company Management and Role Handling routes
-router.patch("/:id/members/:userId",authMiddleware,roleMiddleware("admin"),changeMemberRole);
+router.patch("/:id/members/update-roles",authMiddleware,roleMiddleware("admin"),updateMultipleMemberRoles);
 router.patch("/:id", authMiddleware, roleMiddleware("admin"), updateCompany);
 router.delete("/:id", authMiddleware, roleMiddleware("admin"), deleteCompany);
 router.post("/:id/leave", authMiddleware, leaveCompany);

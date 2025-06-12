@@ -1,15 +1,26 @@
-import React from "react";
+import React, { useState } from "react";
+
 import Navbar from "../components/Navbar";
 import Card from "../components/Card";
+import Overview from "../components/Overview";
+
+import { useAuthStore } from "../store/useAuthStore";
 
 const Dashboard = () => {
+  const [showSwitchModal, setShowSwitchModal] = useState(false);
+  const { authUser } = useAuthStore();
+  const { companyId, activeCompany } = authUser;
   return (
-    <div className="flex min-h-screen flex-col">
-      <Navbar />
-
-      <div className="bg-base flex flex-grow items-center justify-center px-4 py-12">
-        <Card />
-      </div>
+    <div className="flex h-screen flex-col">
+      <Navbar
+        setShowSwitchModal={setShowSwitchModal}
+        showSwitchModal={showSwitchModal}
+      />
+      {!activeCompany || !companyId ? (
+        <Card setShowSwitchModal={setShowSwitchModal} showSwitchModal={showSwitchModal} />
+      ) : (
+        <Overview setShowSwitchModal={setShowSwitchModal} showSwitchModal={showSwitchModal} />
+      )}
     </div>
   );
 };

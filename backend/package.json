@@ -1,16 +1,16 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "src/server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node src/server.js",
     "dev": "nodemon src/server.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Amna Aqeel",
   "license": "ISC",
   "type": "module",
-  "description": "",
+  "description": "Backend for a MERN SaaS Dashboard with authentication, real-time features, and scalable architecture.",
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.5.1",
@@ -30,8 +30,6 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
-    "jest": "^29.7.0",
-    "nodemon": "^3.1.9",
-    "supertest": "^7.0.0"
+    "nodemon": "^3.1.9"
   }
 }

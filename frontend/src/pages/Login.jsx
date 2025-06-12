@@ -1,12 +1,14 @@
-import { Box, Eye, EyeOff } from "lucide-react";
-import { Link } from "react-router-dom";
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+
+import { handleApiError } from "../utils/errorHandler";
 import { useAuthStore } from "../store/useAuthStore";
 import { ButtonLoader } from "../components/Loader";
-import { handleApiError } from "../utils/errorHandler";
+
+import { Box, Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
-  // const navigate = useNavigate(); // This is valid here
+  const navigate = useNavigate(); 
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -15,21 +17,35 @@ const Login = () => {
   const { login, isLoggingIn, TooManyAttempts } =
     useAuthStore();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    try {
-      //  Wait for the API call to complete
-      const response = await login(formData);
-
-      if (response) {
-        //  Only reset form if registration is successful
-        setFormData({ email: "", password: "" });
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+    
+      try {
+        console.log("user tried to login, sending data...")
+        const response = await login(formData);
+        console.log("user logged in successfully...")
+        if (response) {
+          setFormData({ email: "", password: "" });
+    
+          //  Invite redirect logic here
+          const redirectPath = localStorage.getItem("postLoginRedirect");
+          const inviteToken = localStorage.getItem("inviteToken");
+          
+          if (inviteToken && redirectPath?.startsWith("/invite/")) {
+            console.log("special user case, came from invite...")
+            localStorage.removeItem("inviteToken");
+            localStorage.removeItem("postLoginRedirect");
+            console.log("All the formalities done, taking him to invite page...")
+            navigate(`/company-invite/${inviteToken}`);
+          } else {
+            console.log("normal user, taking him to dashboard...") 
+            navigate("/");
+          }
+        }
+      } catch (error) {
+        handleApiError(error); // Show backend errors (but don't reset form)
       }
-    } catch (error) {
-      handleApiError(error); //  Show backend errors (but don't reset form)
-    }
-  };
+    };
 
   return (
     <div className="grid min-h-fit place-items-center">

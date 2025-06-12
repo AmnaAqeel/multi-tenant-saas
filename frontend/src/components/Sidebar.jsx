@@ -5,13 +5,15 @@ import { useAuthStore } from "../store/useAuthStore";
 import { useNotificationStore } from "../store/useNotificationStore";
 
 const Sidebar = () => {
-  const { logout } = useAuthStore();
+  const { logout, authUser } = useAuthStore();
+  const role = authUser?.role;
+
   const { hasNewNotification } = useNotificationStore();
   const [isOpen, setIsOpen] = useState(false);
 
   const navItems = [
     {
-      label: "Dashboard",
+      label: "Overview",
       icon: <ChartLine strokeWidth={3} className="size-4" />,
       to: "/",
     },
@@ -38,11 +40,11 @@ const Sidebar = () => {
       label: "Notifications",
       icon: (
         <>
-          <span className="relative material-symbols-outlined !text-[18px]">
+          <span className="material-symbols-outlined relative !text-[18px]">
             notifications
           </span>
           {hasNewNotification && (
-            <div className="absolute transform translate-x-2.5 -translate-y-1 block h-2.5 w-2.5 rounded-full bg-primary"></div>
+            <div className="bg-primary absolute block h-2.5 w-2.5 translate-x-2.5 -translate-y-1 transform rounded-full"></div>
           )}
         </>
       ),
@@ -60,7 +62,14 @@ const Sidebar = () => {
       icon: (
         <span className="material-symbols-outlined !text-[18px]">archive</span>
       ),
-      to: "/archive",
+      to: "/archives",
+    },
+    {
+      label: "Invites",
+      icon: (
+        <span className="material-symbols-outlined !text-[18px]">mail</span>
+      ),
+      to: "/invites",
     },
   ];
   return (
@@ -83,7 +92,7 @@ const Sidebar = () => {
             <div className="flex items-center gap-2 lg:mt-8">
               <div className="size-9 overflow-hidden rounded-full bg-white">
                 <img
-                  src="/vite.svg"
+                  src={authUser?.profilePicture || "/defaultUser.png"}
                   alt="Profile"
                   className="h-full w-full object-cover"
                 />
@@ -91,39 +100,43 @@ const Sidebar = () => {
 
               <div className="desc">
                 <p className="text-base-content text-md font-semibold">
-                  Sarah Conor
+                  {authUser.name}
                 </p>
                 <p className="text-base-content/60 text-xs font-medium">
-                  Project Manager
+                  {authUser.role}
                 </p>
               </div>
             </div>
           </div>
 
           <div className="content-wrapper flex h-[calc(100%-6rem)] flex-grow flex-col justify-between">
-            {/* removing overflow-y-auto from here*/}
             <div className="list text-base-content/80 mt-5 gap-y-2 p-3 text-sm font-medium sm:px-5">
-              {navItems.map((item, index) => (
-                <NavLink
-                  key={index}
-                  to={item.to}
-                  onClick={() => setIsOpen(false)}
-                  className={({ isActive }) =>
-                    `flex items-center gap-5 rounded-md px-3 py-2 transition-all duration-300 ease-in-out ${
-                      isActive
-                        ? "bg-active-blue text-blue"
-                        : "text-base-content/80 hover:bg-base-300/30 bg-transparent"
-                    }`
-                  }
-                >
-                  {item.icon}
-                  <p>{item.label}</p>
-                </NavLink>
-              ))}
+              {navItems.map((item, index) => {
+                if (role !== "admin" && item.to === "/invites") {
+                  return null;
+                }
+                return (
+                  <NavLink
+                    key={index}
+                    to={item.to}
+                    onClick={() => setIsOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-5 rounded-md px-3 py-2 transition-all duration-300 ease-in-out ${
+                        isActive
+                          ? "bg-active-blue text-blue"
+                          : "text-base-content/80 hover:bg-base-300/30 bg-transparent"
+                      }`
+                    }
+                  >
+                    {item.icon}
+                    <p>{item.label}</p>
+                  </NavLink>
+                );
+              })}
             </div>
             <div className="logout mt-5 p-5 sm:mt-27">
               <button
-                className="text-base-content/90 bg-base-200 flex w-full items-center justify-center gap-x-2 rounded-sm px-3 py-2.5 text-sm font-medium"
+                className="text-base-content/90 bg-base-200 flex w-full cursor-pointer items-center justify-center gap-x-2 rounded-sm px-3 py-2.5 text-sm font-medium"
                 onClick={logout}
               >
                 <span className="material-symbols-outlined !text-[18px] !font-bold">

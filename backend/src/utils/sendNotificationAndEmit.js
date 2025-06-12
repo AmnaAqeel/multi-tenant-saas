@@ -1,15 +1,23 @@
 import Notification from "../models/Notification.model.js";
 import { activeUsers } from "../socket/index.js"; // adjust path as needed
-import {io} from "../server.js"
+import { io } from "../server.js";
 
-export const sendNotificationAndEmit = async ({ userId, message, type, companyId, createdBy }) => {
+export const sendNotificationAndEmit = async ({
+  userId,
+  message,
+  type,
+  companyId,
+  projectId,
+  createdBy,
+}) => {
   // 1. Create and save the notification
   const notification = new Notification({
     userId,
     message,
     type,
     companyId,
-    read: false,  
+    projectId : projectId || null,
+    read: false,
     createdBy,
   });
 

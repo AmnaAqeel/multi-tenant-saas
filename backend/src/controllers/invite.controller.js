@@ -5,7 +5,9 @@ import Invite from "../models/Invite.model.js";
 
 import sendEmail from "../utils/sendEmail.js";
 import {sendNotificationAndEmit} from "../utils/sendNotificationAndEmit.js"
-import generateAccessToken from "../utils/generateAccessToken.js";
+
+//TODO: While sending invite check if user is already a part of company
+//Optional: Make an Invites page or something for admin, currently he could not view the invites or del them
 
 // @route   POST /api/invites/
 // @desc    generate uuid, store it in DB, send invite(link) thru email
@@ -67,7 +69,7 @@ export const sendInvite = async (req, res, next) => {
     //send mail to user
     const invitation = `${process.env.FRONTEND_URL}/company-invite/${token}`;
     await sendEmail(
-      user.email,
+      email,
       "You're Invited to Join a Company",
       `You’ve been invited to join a company on MultiTenant SaaS Dashboard.
     
@@ -104,7 +106,8 @@ export const getSentInvites = async (req, res) => {
 
     const invites = await Invite.find({ companyId }).sort({
       createdAt: -1,
-    });
+    })
+    .populate("invitedBy", "fullName email profilePicture");
 
     res.status(200).json({ invites });
   } catch (error) {
@@ -168,8 +171,27 @@ export const validateInviteToken = async (req, res) => {
     //Find the invite using the token and status
     // Replace the IDs (invitedBy and companyId) with the actual documents
     const invite = await Invite.findOne({ token, status: "pending" })
-      .populate("invitedBy", "name email")
-      .populate("companyId");
+    .populate("invitedBy", "name email")
+    .populate("companyId", "projects")
+    .populate({
+      path: "companyId",
+      populate: {
+        path: "projects",
+        select: "title description status teamMembers",
+      },
+    })
+    .populate({
+      path: "companyId",
+      populate: {
+        path: "projects",
+        match: { isArchived: false },
+        populate: {
+          path: "teamMembers.user",
+          select: "fullName email profilePicture",
+        },
+      },
+      
+    });  
 
     if (!invite) {
       return res
@@ -197,20 +219,15 @@ export const validateInviteToken = async (req, res) => {
   }
 };
 
-// @route   GET /api/invites/:token/join
+// @route   POST /api/invites/:token/join
 // @desc     only validate the invite at this step and then add the user when they click "Join"
 // @access  Authorized only
 export const joinCompany = async (req, res) => {
   const { token } = req.params;
   const userId = req.user._id; // From auth middleware
 
-  console.log(`userId:`, userId);
-  console.log(`token:`, token);
-
   try {
     const invite = await Invite.findOne({ token, status: "pending" });
-    console.log(`invite:`, invite);
-
     if (!invite) {
       return res
         .status(404)
@@ -222,8 +239,6 @@ export const joinCompany = async (req, res) => {
     }
 
     const user = await User.findById(userId);
-
-    // Checking if the user is already a part of the company mentioned in the invite.
     const alreadyInCompany = user.company.some(
       (c) => c.companyId.toString() === invite.companyId.toString()
     );
@@ -234,11 +249,22 @@ export const joinCompany = async (req, res) => {
         .json({ message: "You are already in this company." });
     }
 
-    // Add company to user's list
+    // Add company and role to user
     user.company.push({
       companyId: invite.companyId,
       role: invite.role,
     });
+    
+    console.log("attaching user's active Company")
+    user.activeCompany = invite.companyId;
+
+    console.log("user.activeCompany", user.activeCompany)
+
+    // Applied fix here
+    // // Set activeCompany ONLY if user doesn't already have one
+    // if (!user.activeCompany) {
+    //   user.activeCompany = invite.companyId;
+    // }
 
     await user.save();
 
@@ -248,18 +274,17 @@ export const joinCompany = async (req, res) => {
 
     const joiningUserName = user.fullName;
 
-   // 💌 Notify the admin who sent the invite
-   await sendNotificationAndEmit({
-    userId: invite.invitedBy,
-    message: `${joiningUserName} accepted your invite to join the company.`,
-    type: "invite_accepted",
-    companyId: invite.companyId,
-    createdBy: user._id,
-  });
+    // Notify admin
+    await sendNotificationAndEmit({
+      userId: invite.invitedBy,
+      message: `${joiningUserName} accepted your invite to join the company.`,
+      type: "invite_accepted",
+      companyId: invite.companyId,
+      createdBy: user._id,
+    });
 
-    // 📢 Notify other users in the same company (except the joining user)
+    // Notify others in same company
     const companyUsers = await User.find({ "company.companyId": invite.companyId });
-
     for (const companyUser of companyUsers) {
       if (companyUser._id.toString() !== user._id.toString()) {
         await sendNotificationAndEmit({
@@ -272,22 +297,10 @@ export const joinCompany = async (req, res) => {
       }
     }
 
-    // Generate new access token for the user with their updated company role
-    const accessToken = generateAccessToken({
-      id: user._id,
-      companyId: invite.companyId,
-      role: invite.role,
-    });
+    console.log("user :", user)
 
     res.status(200).json({
       message: "Company joined successfully.",
-      accessToken,
-      user: {
-        name: user.name,
-        email: user.email,
-        activeCompany: user.activeCompany,
-        role: invite.role,
-      },
     });
   } catch (err) {
     console.error("Error joining company:", err);

@@ -18,7 +18,8 @@ import { allowedOrigins } from "./config/cors.js";
 const app = express();
 
 //  Middlewares
-app.use(express.json()); // Body Parser
+app.use(express.json({ limit: "10mb" })); // Body Parser
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
 app.use(cookieParser()); // Cookie Parser
 app.use(helmet()); // Security Headers
 app.use(morgan("dev")); // Logger

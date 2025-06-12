@@ -54,6 +54,11 @@ const ProjectSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    archivedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+      default: null,
+    },
     priority: {
       type: String,
       enum: ["low", "medium", "high", "urgent"],

@@ -1,10 +1,12 @@
-import { EllipsisVertical, CircleCheck } from "lucide-react";
-import ThemeToggle from "../components/ThemeToggle";
-import { formatDistanceToNow } from "date-fns";
 import { useState, useEffect } from "react";
-import {Loader} from "../components/Loader";
-import { useNotificationStore } from "../store/useNotificationStore";
+import { formatDistanceToNow } from "date-fns";
 
+import { EllipsisVertical, CircleCheck } from "lucide-react";
+
+import { Loader } from "../components/Loader";
+import MinimalNavbar from "../components/MinimalNavbar";
+
+import { useNotificationStore } from "../store/useNotificationStore";
 
 //  Overall Concept:
 // We have:
@@ -25,42 +27,31 @@ const Notifications = () => {
     markAllAsRead,
     deleteNotification,
     loading,
-    setHasNewNotfication
+    setHasNewNotfication,
   } = useNotificationStore();
   const [selectedFilter, setSelectedFilter] = useState("all");
+  console.log("notification:", notification);
 
-  
   useEffect(() => {
-    // User has now seen the messages
-    setHasNewNotfication(false);
-  }, [setHasNewNotfication]);
+    if (notification.length > 0) {
+      // Reapply filter every time new notifications arrive
+      handleFilterChange(selectedFilter);
+    }
+  }, [notification]);
+  useEffect(() => {
+    if (notification.length > 0) {
+      setFilteredNotification(notification); // apply default filter
+      setHasNewNotfication(notification.some((n) => !n.read));
+    }
+  }, [notification]);
   
-  if(loading) return <Loader />
+  
 
-  const markSingleAsRead = (id) => {
-    const updated = notification.map((n) =>
-      n._id === id ? { ...n, read: true } : n
-    );
-  
-    setNotifications(updated);         // Update main list
-    // setSelectedFilter("all"); // Just before markSingleAsRead runs
-    reapplyFilter(updated);            // Re-apply filter to update UI view
-    markAsRead(id);                    // API call to update DB
-  };
+  useEffect(() => {
+    const hasUnread = filteredNotification.some((n) => !n.read);
+    setHasNewNotfication(hasUnread);
+  }, [filteredNotification, setHasNewNotfication]);
 
-  const handleMarkAllRead = () => {
-    // Update master notification list
-    const updated = notification.map((n) =>
-      filteredNotification.some((f) => f._id === n._id)
-        ? { ...n, read: true }
-        : n
-    );
-  
-    setNotifications(updated); // master updated
-    reapplyFilter(updated);    // filtered updated based on selected filter
-    markAllAsRead();
-  };
-  
   const handleFilterChange = (filter) => {
     setSelectedFilter(filter);
 
@@ -77,15 +68,39 @@ const Notifications = () => {
   };
 
   const reapplyFilter = (data) => {
-    let filtered = data;  // Default to unfiltered
-  
+    let filtered = data; // Default to unfiltered
+
     if (selectedFilter === "unread") {
-      filtered = data.filter((n) => !n.read);  // Show only unread
+      filtered = data.filter((n) => !n.read); // Show only unread
     } else if (selectedFilter === "read") {
-      filtered = data.filter((n) => n.read);  // Show only read
+      filtered = data.filter((n) => n.read); // Show only read
     }
+
+    setFilteredNotification(filtered); // Set the filtered data
+  };
   
-    setFilteredNotification(filtered);  // Set the filtered data
+  const markSingleAsRead = (id) => {
+    const updated = notification.map((n) =>
+      n._id === id ? { ...n, read: true } : n,
+    );
+
+    setNotifications(updated); // Update main list
+    // setSelectedFilter("all"); // Just before markSingleAsRead runs
+    reapplyFilter(updated); // Re-apply filter to update UI view
+    markAsRead(id); // API call to update DB
+  };
+
+  const handleMarkAllRead = () => {
+    // Update master notification list
+    const updated = notification.map((n) =>
+      filteredNotification.some((f) => f._id === n._id)
+        ? { ...n, read: true }
+        : n,
+    );
+
+    setNotifications(updated); // master updated
+    reapplyFilter(updated); // filtered updated based on selected filter
+    markAllAsRead();
   };
 
   const handleRemoveNotification = (id) => {
@@ -94,7 +109,8 @@ const Notifications = () => {
     reapplyFilter(updated);
     deleteNotification(id);
   };
-  
+
+  if (loading) return <Loader />;
 
   const daysAgo = 5; //  change this to 7 or whatever
   const timeThreshold = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
@@ -110,37 +126,21 @@ const Notifications = () => {
   return (
     <>
       {/* <!-- navbar --> */}
-      <div className="navbar border-base-content/10 h-12 border-b">
-        {/* <!-- Header --> */}
-        <div className="flex w-full items-center justify-between p-5 md:p-20">
-          <div className="flex items-center">
-            <h3 className="font-semibold ml-5 md:ml-0">Dashboard</h3>
-          </div>
-          <div className="flex items-center">
-            <div className="theme-toggle p-2 hover:scale-120 hover:transform">
-              <ThemeToggle
-                className="text-base-content/70 md:text-base-content/50"
-                className2="size-7 md:size-6"
-              />
-            </div>
-            <div className="size-8 rounded-full bg-black md:size-7.5"></div>
-          </div>
-        </div>
-      </div>
-      <div className="body bg-base-200 w-full min-h-full">
-        <div className="container mx-auto pl-5 pr-5 md:pr-20 md:pl-20">
+      <MinimalNavbar padding="p-5 md:p-4" />
+      <div className="body bg-base-200 min-h-full w-full">
+        <div className="container mx-auto pr-5 pl-5 md:px-8 ">
           <div className="mb-4 flex justify-between">
-            <h2 className="text-base-content pt-5 text-xl font-semibold">
+            <h2 className="text-base-content pt-5 text-lg font-semibold">
               Notifications
             </h2>
-            <div className="flex flex-col items-start justify-between mt-7 md:mt-0 gap-1 md:gap-4 pt-5 md:flex-row md:items-center">
+            <div className="mt-7 flex flex-col items-start justify-between gap-1 pt-5 md:mt-0 md:flex-row md:items-center md:gap-4">
               {/* Mark all as read button */}
               <button
                 className="btn text-primary flex transform items-center justify-center border-none text-[16px] shadow-none transition duration-200 hover:scale-103 hover:bg-transparent hover:shadow-none"
                 onClick={handleMarkAllRead}
               >
-                <CircleCheck className="mb-0.5 size-4.5" />{" "}
-                <h1 className="font-medium">Mark all as read</h1>
+                <CircleCheck className="mb-0.5 size-4" />{" "}
+                <h1 className="font-medium text-[14px]">Mark all as read</h1>
               </button>
 
               {/* Filter dropdown */}
@@ -213,7 +213,7 @@ const Notifications = () => {
               </div>
             </div>
           </div>
-          <div className="h-full w-full rounded-2xl shadow-sm overflow-hidden">
+          <div className="h-full w-full overflow-hidden rounded-2xl shadow-sm">
             {/* <!-- UNREAD Section --> */}
             <div className="mb-4">
               <div className="flex items-center gap-2">
@@ -231,15 +231,18 @@ const Notifications = () => {
                       key={each._id}
                       className={`card ${each.read ? "bg-base-100" : "bg-primary/7"} rounded-none transition-colors`}
                     >
-                      <div className="card-body border-base-content/5 border-b p-4">
+                     <div className="card-body border-base-content/5 border-b p-4">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-start gap-3">
-                            <div className="bg-primary md:size-9 sm:size-6 rounded-full">
+                            <div>
+                            <div className="rounded-full size-8 sm:size-6 md:size-9">
                               <img
-                                src={each.userId.profilePicture}
-                                className="h-full w-full rounded-full sm:size-6 md:size-9"
+                                src={each.createdBy.profilePicture}
+                                className="h-full w-full rounded-full size-8 sm:size-6 md:size-9"
                               />
                             </div>
+                            </div>
+                          <div className="flex items-start gap-3 w-ful">
                             <div>
                               <h4 className="text-base-content">
                                 <span className="font-bold">
@@ -257,6 +260,7 @@ const Notifications = () => {
                               </p>
                             </div>
                           </div>
+                          </div>
                           <div className="dropdown dropdown-bottom dropdown-end">
                             <div
                               tabIndex={0}
@@ -271,16 +275,21 @@ const Notifications = () => {
                             >
                               <li>
                                 <a
-                                  onClick={() =>
-                                    handleRemoveNotification(each._id)
-                                  }
+                                  onClick={() => {
+                                    handleRemoveNotification(each._id);
+                                    document.activeElement.blur();
+                                  }}
                                 >
                                   Remove
                                 </a>
                               </li>
-
                               <li>
-                                <a onClick={() => {markSingleAsRead(each._id)}}>
+                                <a
+                                  onClick={() => {
+                                    markSingleAsRead(each._id);
+                                    document.activeElement.blur();
+                                  }}
+                                >
                                   Mark as read
                                 </a>
                               </li>
@@ -291,11 +300,11 @@ const Notifications = () => {
                     </div>
                   ))
                 ) : (
-                  <div className="card bg-base-100 hover:bg-primary/8 rounded-none transition-colors">
+                  <div className="card bg-base-100 rounded-none transition-colors">
                     <div className="card-body border-base-content/5 border-b p-4">
                       <div className="flex items-start justify-between gap-2">
-                        <h2 className="text-base-content text-[15px]">
-                          No Older Notifications
+                        <h2 className="text-base-content text-[15px] italic">
+                          No Recent Notifications
                         </h2>
                       </div>
                     </div>
@@ -321,12 +330,15 @@ const Notifications = () => {
                       <div className="card-body border-base-content/5 border-b p-4">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-start gap-3">
-                            <div className="bg-primary md:size-9 rounded-full sm:size-6 ">
+                            <div>
+                            <div className="rounded-full size-8 sm:size-6 md:size-9">
                               <img
-                                src={each.userId.profilePicture}
-                                className="h-full w-full rounded-full sm:size-6 md:size-9"
+                                src={each.createdBy.profilePicture}
+                                className="h-full w-full rounded-full size-8 sm:size-6 md:size-9"
                               />
                             </div>
+                            </div>
+                          <div className="flex items-start gap-3 w-ful">
                             <div>
                               <h4 className="text-base-content">
                                 <span className="font-bold">
@@ -344,6 +356,7 @@ const Notifications = () => {
                               </p>
                             </div>
                           </div>
+                          </div>
                           <div className="dropdown dropdown-bottom dropdown-end">
                             <div
                               tabIndex={0}
@@ -356,17 +369,23 @@ const Notifications = () => {
                               tabIndex={0}
                               className="dropdown-content menu bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm"
                             >
-                               <li>
+                              <li>
                                 <a
-                                  onClick={() =>
-                                    handleRemoveNotification(each._id)
-                                  }
+                                  onClick={() => {
+                                    handleRemoveNotification(each._id);
+                                    document.activeElement.blur();
+                                  }}
                                 >
                                   Remove
                                 </a>
                               </li>
                               <li>
-                              <a onClick={() => {markSingleAsRead(each._id)}}>
+                                <a
+                                  onClick={() => {
+                                    markSingleAsRead(each._id);
+                                    document.activeElement.blur();
+                                  }}
+                                >
                                   Mark as read
                                 </a>
                               </li>
@@ -377,7 +396,7 @@ const Notifications = () => {
                     </div>
                   ))
                 ) : (
-                  <div className="card bg-base-100 hover:bg-primary/8 rounded-none transition-colors">
+                  <div className="card bg-base-100 rounded-none transition-colors">
                     <div className="card-body border-base-content/5 border-b p-4">
                       <div className="flex items-start justify-between gap-2">
                         <h2 className="text-base-content text-[15px]">

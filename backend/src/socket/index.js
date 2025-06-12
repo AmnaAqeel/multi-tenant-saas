@@ -9,19 +9,25 @@ export const setupSocket = (io) => {
 
   io.on("connection", async (socket) => {
     console.log("⚡ New client connected:", socket.id);
+    const companyId = socket.user?.companyId?._id || socket.user?.companyId;
 
     const userId = socket.user.id; // Assuming the token contains userId
     activeUsers[userId] = socket.id; // Map the userId to their socketId
 
+    if (!companyId) {
+      console.error('No companyId found for socket connection.');
+      socket.disconnect();
+      return;
+   }   
+
     const unread = await Notification.find({
+      companyId,
       userId,
       type: { $ne: "system_announcement" }
     })
-    .populate("userId", "profilePicture") // populate fields from user
+    .populate("createdBy", "profilePicture") // populate fields from user
     .sort({ createdAt: -1 });  
-    if (unread.length) {
-      socket.emit("initialNotifications", unread);
-    }
+    socket.emit("initialNotifications", unread); // always emit, even if empty
 
     // Now you can access user data on the socket (stored in socket.user)
     console.log("Connected user:", socket.user); // e.g., { userId: ..., companyId: ... }

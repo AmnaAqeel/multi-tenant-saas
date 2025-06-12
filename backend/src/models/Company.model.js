@@ -39,7 +39,7 @@ const companySchema = new mongoose.Schema(
     projects: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "project",
+        ref: "Project",
       },
     ],
     members: [
@@ -66,6 +66,6 @@ const companySchema = new mongoose.Schema(
 );
 
 
-const Company = mongoose.model("company", companySchema);
+const Company = mongoose.model("Company", companySchema);
 
 export default Company;

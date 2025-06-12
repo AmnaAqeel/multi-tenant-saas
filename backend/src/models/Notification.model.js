@@ -12,6 +12,11 @@ const notificationSchema = new mongoose.Schema(
       ref: "company", // Refers to the company where the user joined
       required: true,
     },
+    projectId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Project", // Refers to the project where the user joined
+      required: false,
+    },
     message: {
       type: String,
       required: true,
@@ -27,6 +32,7 @@ const notificationSchema = new mongoose.Schema(
         "task_status_changed",
         "project_status_changed",
         "project_restored",
+        "role_changed",
         "system_announcement", // Admins can send system-wide notifications
       ],
       required: true,

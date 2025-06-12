@@ -59,13 +59,22 @@ export const useSocketStore = create((set, get) => ({
       console.error("🚨 Socket connect error:", err.message);
 
       if (err.message.includes("Invalid or expired token")) {
-        try {
-          // Try refreshing the token manually (from your auth store)
-          const newToken = await useAuthStore.getState().refreshAccessToken();
-          useSocketStore.get().reconnectWithNewToken(newToken);
-        } catch (refreshError) {
-          console.error("❌ Token refresh failed:", refreshError.message);
-          // Optional: Logout user or show login modal
+        // try {
+        //   // Try refreshing the token manually (from your auth store)
+        //   const newToken = useAuthStore.getState().accessToken;
+        //   get().reconnectWithNewToken(newToken);
+        // } catch (refreshError) {
+        //   console.error("❌ Token refresh failed:", refreshError.message);
+        //   // Optional: Logout user or show login modal
+        // }
+        const newToken = await refreshToken(); // Ensure this gives a valid token
+
+        if (newToken) {
+          socket.auth.token = newToken;
+          socket.connect(); // manually reconnect with fresh token
+        } else {
+          console.log("❌ No valid token, not reconnecting.");
+          socket.disconnect(); // stop loop
         }
       }
     });

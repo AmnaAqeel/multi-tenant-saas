@@ -1,4 +1,4 @@
-import { Box, LoaderCircle } from "lucide-react";
+import { Box } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 
@@ -15,9 +15,9 @@ const ForgotPassword = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (isDisabled) return; // ✅ Prevent multiple clicks
+    if (isDisabled) return; //  Prevent multiple clicks
 
-    setIsDisabled(true); // ✅ Disable button immediately
+    setIsDisabled(true); //  Disable button immediately
 
     try {
       //  Wait for the API call to complete
@@ -28,11 +28,11 @@ const ForgotPassword = () => {
         setFormData({ email: "" }); //  Reset form fields
       }
 
-      // ✅ Set cooldown before allowing another request
-      setTimeout(() => setIsDisabled(false), 200000); // 20 seconds cooldown to 2 mins
+      //  Set cooldown before allowing another request
+      setTimeout(() => setIsDisabled(false), 20000); // 20 seconds cooldown to 2 mins
     } catch (error) {
       handleApiError(error); //  Show backend errors (but don't reset form)
-      setIsDisabled(false); // ✅ Re-enable button if request fails
+      setIsDisabled(false); //  Re-enable button if request fails
     }
   };
 

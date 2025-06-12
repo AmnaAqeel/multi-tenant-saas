@@ -6,7 +6,7 @@ const inviteSchema = new mongoose.Schema(
     email: { type: String, required: true },
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "company",
+      ref: "Company",
       required: true,
     },
     role: {
@@ -18,7 +18,7 @@ const inviteSchema = new mongoose.Schema(
     expiresAt: { type: Date, required: true },
     status: {
       type: String,
-      enum: ["pending", "accepted", "revoked"],
+      enum: ["pending", "accepted"],
       default: "pending",
     },
     invitedBy: {

@@ -17,9 +17,11 @@ import {
     restoreProject,
     deleteProject,
     getArchivedProjects,
+    removeTeamMembersFromProject,
 } from "../controllers/project.controller.js";
 
 import {
+    getTasks,
     createTask,
     getAllTasks,
     getTaskById,
@@ -42,18 +44,24 @@ const router = express.Router();
 
 router.get("/", authMiddleware, getAllProjects);// Get all projects (with optional query ?status=archived&priority=high)
 router.post("/", authMiddleware, roleMiddleware("admin"), validateInput(createProjectValidation), createProject); // Create a project
+
+// ---Single Task Route (that needs to be before dynamic routes)
+router.get("/tasks", authMiddleware, getTasks); // Get all tasks against a user
+
 router.patch("/:id/add-members", authMiddleware, projectRoleMiddleware("admin", "editor"), addTeamMembersToProject); //Add project members
+router.patch("/:id/remove-members", authMiddleware, projectRoleMiddleware("admin", "editor"), removeTeamMembersFromProject); //Add project members
 router.get("/:id/members", authMiddleware, projectRoleMiddleware("admin", "editor"), getAllProjectMembers); // Get all members of a specific project
 router.get("/:id", authMiddleware, getProjectById); // Get a single project by ID
 router.patch("/:id", authMiddleware,projectRoleMiddleware("admin", "editor"), updateProject); // Update a project
 router.patch("/:id/status", authMiddleware, projectRoleMiddleware("admin", "editor"), updateProjectStatus); // Route to update the project status only
 router.patch("/:id/restore", authMiddleware, projectRoleMiddleware("admin"), restoreProject); // Restore an archived project
 router.delete("/:id", authMiddleware, projectRoleMiddleware("admin"), deleteProject); // Delete a project
-router.get("/archived/list", authMiddleware, roleMiddleware("admin"), getArchivedProjects); // Shortcut to get archived projects
+router.get("/archived/list", authMiddleware, getArchivedProjects); // Shortcut to get archived projects
 
 // *** Task Routes ***
 
 // Get all tasks for a project (optional query parameters for filtering)
+
 router.get("/:projectId/tasks", authMiddleware, getAllTasks); // Get all tasks for a project
 router.post("/:projectId/tasks", authMiddleware, projectRoleMiddleware("admin", "editor"), validateInput(createTaskValidation), createTask); // Create a task for a project
 router.get("/:projectId/tasks/:taskId", authMiddleware, getTaskById); // Get task by ID within project
@@ -63,10 +71,10 @@ router.patch("/:projectId/tasks/:taskId/update-members", authMiddleware, project
 router.delete("/:projectId/tasks/:taskId", authMiddleware, projectRoleMiddleware("admin", "editor"), deleteTask); // Delete task
 
 // *** Subtask Routes (nested under tasks) ***
-router.get("/:projectId/tasks/:taskId/subtasks", authMiddleware, projectRoleMiddleware("admin", "editor"), getAllSubtasksForTask); // gets all subtasks
-router.post("/:projectId/tasks/:taskId/subtasks", authMiddleware, projectRoleMiddleware("admin", "editor"), addSubtask); // Add subtask to a task
-router.patch("/:projectId/tasks/:taskId/subtasks/:subtaskId", authMiddleware, projectRoleMiddleware("admin", "editor"), updateSubtask); // Update a subtask
-router.delete("/:projectId/tasks/:taskId/subtasks/:subtaskId", authMiddleware, projectRoleMiddleware("admin", "editor"), deleteSubtask); // Delete a subtask
+router.get("/:projectId/tasks/:taskId/subtasks", authMiddleware, getAllSubtasksForTask); // gets all subtasks
+router.post("/:projectId/tasks/:taskId/subtasks", authMiddleware, addSubtask); // Add subtask to a task
+router.patch("/:projectId/tasks/:taskId/subtasks/:subtaskId", authMiddleware, updateSubtask); // Update a subtask
+router.delete("/:projectId/tasks/:taskId/subtasks/:subtaskId", authMiddleware, deleteSubtask); // Delete a subtask
 
 // *** Comment Routes (nested under tasks) ***
 router.post("/:projectId/tasks/:taskId/comments", authMiddleware, addCommentToTask); // Add comment to task

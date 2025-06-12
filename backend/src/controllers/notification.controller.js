@@ -1,4 +1,5 @@
 import Notification from "../models/Notification.model.js";
+import mongoose from "mongoose";
 import User from "../models/User.model.js";
 
 
@@ -39,61 +40,108 @@ export const createNotification = async (req, res, next) => {
 // @desc    generate a company wide notification for all members
 // @access  Admin only
 export const createSystemAnnouncement = async (req, res, next) => {
-  const { companyId } = req.user;  // Get the company ID from the user
-  const { message } = req.body;  // The message content for the announcement
+  const { companyId } = req.user;
+  const { message } = req.body;
 
   if (!message) {
     return res.status(400).json({ message: "Announcement message is required." });
   }
 
   try {
-    // Find all users in the company
     const users = await User.find({ "company.companyId": companyId });
 
-    // Create and save notification for each user in the company
+    let adminNotification = null;
+
     for (const user of users) {
       const notification = new Notification({
         userId: user._id,
-        message: `System Announcement: ${message}`,
+        message,
         type: "system_announcement",
-        companyId: companyId,
+        companyId,
         read: false,
-        createdBy: req.user._id,  // The admin who created the announcement
+        createdBy: req.user._id,
       });
-      await notification.save();
+
+      const saved = await notification.save();
+
+      // Save admin's version to send back
+      if (user._id.toString() === req.user._id.toString()) {
+        adminNotification = saved;
+      }
     }
 
-    res.status(200).json({ message: "System announcement created and notifications sent." });
+    return res.status(200).json(adminNotification); // return the full object
   } catch (error) {
     console.error("Error creating system announcement:", error);
     next(error);
   }
 };
 
+
+// @route   GET /api/notifiactions/
+// @desc    fetch system Notf for evreyone
+// @access  everyone
+export const getSystemAnnouncements = async (req, res) => {
+  const { _id: userId, companyId } = req.user;
+  try {
+    const announcements = await Notification.find({
+      type: 'system_announcement',
+      userId,
+      companyId,
+    }).sort({ createdAt: -1 });
+
+    res.status(200).json(announcements);
+  } catch (err) {
+    console.error("Failed to fetch announcements:", err);
+    res.status(500).json({ error: 'Failed to fetch system announcements' });
+  }
+};
+
+
 // @route   GET /api/notifiactions/
 // @desc    get all notifications (supports filtering)
 // @access  Authorized only
 export const getNotifications = async (req, res, next) => {
-    try {
-      const { companyId } = req.user; // Assuming companyId is in the accessToken
-      const { type, status } = req.query;  // Capture query parameters
-      const filter = { userId: req.user._id, companyId }; // Always filter by userId and companyId
-  
-      if (type) {
-        filter.type = type;  // Filter by notification type (e.g., 'task_assigned', 'user_added_to_project')
-      }
-  
-      if (status) {
-        filter.read = status === 'unread';  // Filter by read/unread status
-      }
-  
-      const notifications = await Notification.find(filter).sort({ createdAt: -1 });
-      res.status(200).json(notifications);
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-      next(error);
-    }
+  try {
+    const { companyId } = req.user;
+    const { type } = req.query;
+
+    const filter = {
+      companyId,
+      ...(type && { type }),
+    };
+
+    const notifications = await Notification.find(filter).sort({ createdAt: -1 });
+    res.status(200).json(notifications);
+  } catch (error) {
+    console.error("Error fetching company notifications:", error);
+    next(error);
+  }
   };
+
+// @route   GET /api/notifiactions/project/:projectId
+// @desc    get all notifications for a project
+// @access  Authorized only
+export const getProjectNotificationsByProject = async (req, res, next) => {
+  console.log("Notification with projectId was hit");
+  
+  try {
+    const {  companyId: {_id: companyId},  _id: userId } = req.user;
+    const { projectId } = req.params;
+
+    const notifications = await Notification.find({
+      userId,
+      companyId,
+      projectId: new mongoose.Types.ObjectId(projectId), // handle ObjectId match
+    }).sort({ createdAt: -1 });
+
+    console.log("returning: ", notifications)
+    res.status(200).json(notifications);
+  } catch (error) {
+    console.error("Error fetching project notifications:", error);
+    next(error);
+  }
+};
   
 // @route   PATCH /api/notifications/:id/read
 // @desc    get all notifications (supports filtering)
@@ -112,6 +160,10 @@ export const markNotificationAsRead = async (req, res, next) => {
     // Ensure that only the owner of the notification can mark it as read
     if (notification.userId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (notification.read) {
+      return res.status(400).json({ message: "Notification already marked as read" });
     }
 
     notification.read = true;

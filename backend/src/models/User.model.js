@@ -29,9 +29,9 @@ const UserSchema = new mongoose.Schema(
     profilePicture: { type: String, default: "https://ui-avatars.com/api/?name=User&background=random&length=1" },    
     company: [
       {
-        companyId: {
+        companyId: { 
           type: mongoose.Schema.Types.ObjectId,
-          ref: "company",
+          ref: "Company"
         },
         role: {
           type: String,

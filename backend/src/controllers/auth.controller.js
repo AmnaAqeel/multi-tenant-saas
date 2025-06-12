@@ -1,6 +1,11 @@
 import User from "../models/User.model.js";
 import sendEmail from "../utils/sendEmail.js";
 import generateAccessToken from "../utils/generateAccessToken.js";
+import {attachCompanyNames} from "../utils/attachCompanyNames.js";
+
+import cloudinary from "../config/cloudinary.js";
+
+import refreshFromAccessToken from "../utils/refreshFromAccessToken.js";
 
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
@@ -75,7 +80,6 @@ export const loginUser = async (req, res, next) => {
       return next(error);
     }
 
-    // 🔸 Initialize
     let companyEntry = null;
     let companyId = null;
     let role = null;
@@ -90,10 +94,11 @@ export const loginUser = async (req, res, next) => {
         role = companyEntry.role;
       }
     }
+
     const accessToken = generateAccessToken({
       id: user._id,
       role,
-      companyId
+      companyId,
     });
 
     const refreshToken = jwt.sign(
@@ -113,14 +118,17 @@ export const loginUser = async (req, res, next) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
+    const updatedCompanies = await attachCompanyNames(user.company);
+
     res.status(200).json({
       message: "Logged In successfully!",
       accessToken,
       user: {
         _id: user._id,
-        name: user.name,
+        name: user.fullName,
         email: user.email,
-        companies: user.company,
+        profilePicture: user.profilePicture,
+        companies: updatedCompanies,
         activeCompany: user.activeCompany,
         companyId,
         role,
@@ -169,102 +177,83 @@ export const logoutUser = async (req, res, next) => {
 // @route   POST /api/auth/refresh-token
 // @desc    refresh user token, returns new access token, doesn't change the active company
 // @access  public route
+
+//Explaination:
+//  I’m only generating accessToken at login and refresh-token endpoints.
+//  For other routes, I manually hit the refresh-token API afterward to re-sync state and regenerate a valid accessToken based on current company context.
+//  The new accessToken and authUser are stored in frontend state and used for protected routes and user interface.
+//  This gives full control, keeps backend clean, and makes frontend super flexible.
 export const refreshUserToken = async (req, res, next) => {
   try {
-    // 🔹 1. Extract refresh token from cookies
     const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken) {
-      const error = new Error("Unauthorized. Please log in again.");
-      error.status = 401;
-      return next(error);
+    const accessToken = req.headers.authorization?.split(" ")[1];
+
+    // 🎯 CASE 1 — Manual frontend refresh using accessToken (no refreshToken) using rawxios
+    if (!refreshToken && accessToken) {
+      return refreshFromAccessToken(req, res, next);
     }
 
-    // 🔹 2. Verify refresh token with JWT
+    // ❗️CASE 2 — Invalid: neither refreshToken nor accessToken
+    if (!refreshToken && !accessToken) {
+      return res.status(401).json({ message: "Unauthorized. Please log in again." });
+    }
+
+    // 🎯 CASE 3 — RefreshToken exists (Interceptor or Session Restore)
     let decodedRefresh;
     try {
       decodedRefresh = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
-      console.log(`decodedRefresh:`, decodedRefresh);
     } catch (err) {
-      const error = new Error("Invalid or expired refresh token.");
-      error.status = 401;
-      return next(error);
+      return res.status(401).json({ message: "Invalid or expired refresh token." });
     }
 
-    // 🔹 4. Check if user exists and refresh token is not expired
     const user = await User.findById(decodedRefresh.id);
-    console.log(`user:`, user);
-
     const tokensMatch = user?.refreshToken?.trim() === refreshToken?.trim();
     const tokenExpired = user?.refreshTokenExpires < Date.now();
 
-    if (
-      !user ||
-      !user.refreshToken ||
-      !user.refreshTokenExpires ||
-      !tokensMatch ||
-      tokenExpired
-    ) {
+    if (!user || !tokensMatch || tokenExpired) {
       if (user) {
         user.refreshToken = null;
         user.refreshTokenExpires = null;
         await user.save();
       }
-
-      const error = new Error("Session expired. Please log in again.");
-      error.status = 401;
-      return next(error);
+      return res.status(401).json({ message: "Session expired. Please log in again." });
     }
 
-    // 🔹 4. Decode the original access token (expired one) from Authorization header
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      const error = new Error("Missing access token.");
-      error.status = 401;
-      return next(error);
-    }
-
-    const expiredAccessToken = authHeader.split(" ")[1];
-    console.log(`expiredAccessToken: ${expiredAccessToken}`);
-
-    // Use ignoreExpiration to decode it even if expired
-    let decodedAccess;
-    try {
-      decodedAccess = jwt.verify(expiredAccessToken, process.env.JWT_SECRET, {
-        ignoreExpiration: true,
-      });
-      console.log("decodedAccess");
-      // console.log(decodedAccess)
-    } catch (err) {
-      const error = new Error("Invalid access token.");
-      error.status = 401;
-      return next(error);
-    }
-
-    const { companyId, role } = decodedAccess;
-
-    // 🔹 5. Generate new access token with same context
-    const accessToken = generateAccessToken({
-      id: user._id,
-      companyId,
-      role
-    });
-
-    // 🔹 6. Send new access token in response
-    res.status(200).json({
-      accessToken,
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        companies: user.company,
-        activeCompany: user.activeCompany,
-        companyId,
-        role,
-      },
-    });
+    return refreshFromAccessToken(req, res, next, user);
   } catch (error) {
     console.error("refreshUserToken Error:", error);
     next(error);
+  }
+};
+
+// @route   PUT /api/auth/update-profile
+// @desc    update user profile picture
+// @access  private route
+export const updateProfile = async (req, res, next) => {
+  try {
+    const {profilePic} = req.body;
+    const userId = req.user._id; // assuming you have user injected from auth middleware
+
+    // 🔹 1. Handle file upload
+    if (!profilePic) {
+      return res.status(400).json({ message: "Profile Picture is required!" });
+    }
+
+     // Upload the profile picture to Cloudinary
+     const uploadResponse = await cloudinary.uploader.upload(profilePic);
+     console.log(`Cloudinary upload response: ${JSON.stringify(uploadResponse)}`);
+
+      // Update the user's profile picture in the database
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { profilePicture: uploadResponse.secure_url },
+      { new: true }
+    ).select("-password");
+
+    return res.status(200).json(updatedUser);
+  } catch (error) {
+    console.log(`Error in update profile: ${error.message}`);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
@@ -272,6 +261,7 @@ export const refreshUserToken = async (req, res, next) => {
 // @desc    create a link, send email containing the link for reset password
 // @access  public route
 export const forgotPassword = async (req, res, next) => {
+  console.log("Reached ForgotPassword")
   const { email } = req.body;
   try {
     if (!email) {
@@ -352,3 +342,4 @@ export const resetUserPassword = async (req, res, next) => {
     next(error);
   }
 };
+

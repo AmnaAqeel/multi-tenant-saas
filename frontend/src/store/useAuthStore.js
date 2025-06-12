@@ -18,8 +18,9 @@ export const useAuthStore = create(
       sendingEmail: false,
       isResetingPassword: false,
       isRegistering: false,
+      isUpdatingProfile: false,
 
-      hasCheckedAuth: false, // NEW: track if checkAuth ran
+      hasCheckedAuth: false, // track if checkAuth ran
 
       // Setters
       setTooManyAttempts: (value) => {
@@ -35,7 +36,7 @@ export const useAuthStore = create(
       register: async (data, navigate) => {
         set({ isRegistering: true });
         try {
-          const response = await rawAxios.post("/auth/register", data);
+          const response = await rawAxios.post("/auth/", data);
           toast.success(response?.data?.message || "Registration successful!");
           if (response) {
             navigate("/signin");
@@ -53,7 +54,7 @@ export const useAuthStore = create(
         set({ isCheckingAuth: true });
         try {
           //  Get the expired token from store
-          const expiredToken = get().accessToken;
+          const expiredToken = get().accessToken;       
 
           //  Send it in Authorization header
           const res = await rawAxios.post("/auth/refresh-token", null, {
@@ -75,7 +76,7 @@ export const useAuthStore = create(
           get().logout();
           return false;
         } finally {
-          set({ isCheckingAuth: false, hasCheckedAuth: true }); // ✅ important
+          set({ isCheckingAuth: false, hasCheckedAuth: true }); 
         }
       },
       login: async (data) => {
@@ -119,18 +120,19 @@ export const useAuthStore = create(
           return false;
         }
       },
-
       forgotPassword: async (data) => {
+        console.log("Entered zustand for forget password")
+        console.log("data", data)
         set({ sendingEmail: true });
         try {
-          const response = await axiosInstance.post(
+          const response = await rawAxios.post(
             "/auth/forgot-password",
             data,
           );
-          // if (response.data.message) {
-          //   toast.success(response.data.message);
-          // }
-          toast.success(response?.data?.message);
+          console.log("response :", response)
+          if (response) {
+            toast.success(response?.data?.message);
+          }
           return response.data; //  Ensure store returns response to component
         } catch (error) {
           console.error("API Error:", error.response?.data || error.message); //  Log error details
@@ -144,7 +146,7 @@ export const useAuthStore = create(
         set({ isResettingPassword: true });
 
         try {
-          const response = await axiosInstance.patch(
+          const response = await rawAxios.patch(
             `/auth/reset-password?token=${token}`, // Send token as query param
             { newPassword }, // Send new password in request body
           );
@@ -156,6 +158,18 @@ export const useAuthStore = create(
           handleApiError(error); //  Show error toast
         } finally {
           set({ isResettingPassword: false });
+        }
+      },
+      updateProfile: async (data) => {
+        set({ isUpdatingProfile: true });
+        try {
+          const res = await axiosInstance.put("/auth/update-profile", data);
+          toast.success("Profile updated successfully");
+          set({ authUser: res.data });
+        } catch (error) {
+          toast.error(error.response.data.message);
+        } finally {
+          set({ isUpdatingProfile: false });
         }
       },
     }),
