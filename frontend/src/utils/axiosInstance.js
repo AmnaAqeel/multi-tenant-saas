@@ -7,13 +7,13 @@ import { waitForToken } from "./waitForToken";
 // Normal instance (has interceptors)
 const axiosInstance = axios.create({
   // baseURL: import.meta.env.VITE_BACKEND_URL, // Uses env variable if available
-  baseURL: "http://localhost:5000/api",
+  baseURL: import.meta.env.VITE_BACKEND_URL,
   withCredentials: true,
 });
 
 // Raw instance (no interceptors)
 export const rawAxios = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: import.meta.env.VITE_BACKEND_URL,
   withCredentials: true,
 });
 

@@ -18,7 +18,7 @@ export const useSocketStore = create((set, get) => ({
     console.log("🔑 Access token:", accessToken);
     if (!accessToken) return;
 
-    const socket = io("http://localhost:5000", {
+    const socket = io(import.meta.env.VITE_SOCKET_URL, {
       autoConnect: false,
       auth: {
         token: accessToken,
