@@ -29,7 +29,7 @@ import Settings from "./pages/Settings";
 import Invites from "./pages/Invites";
 
 //Layouts
-import AuthLayout from "./layout/AuthLayout";
+import AuthLayout from "./layout/authLayout";
 import DashboardLayout from "./layout/DashboardLayout";
 
 import ProtectedRoute from "./components/ProtectedRoute";
