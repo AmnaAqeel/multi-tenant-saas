@@ -6,12 +6,10 @@ A multi-tenant SaaS dashboard with authentication, notifications, and real-time 
 - Authentication & Authorization  
 - Real-time Notifications (Socket.io)  
 - Email Notifications (Nodemailer)  
-- Payment Integration (Stripe)  
-- Performance Optimizations (Caching, Scaling)  
 
 ## Tech Stack  
 - **Backend**: Node.js, Express, MongoDB  
-- **Frontend**: React, TailwindCSS (Coming soon)  
+- **Frontend**: React, TailwindCSS
 - **Real-time**: Socket.io  
 - **CI/CD**: GitHub Actions (Later)  
 
