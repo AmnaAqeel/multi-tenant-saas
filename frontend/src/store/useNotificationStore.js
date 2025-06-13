@@ -47,7 +47,7 @@ export const useNotificationStore = create((set, get) => ({
         `/notifications/${id}/read`,
         {},
       );
-      console.log("markasRead response:", response);
+      log("markasRead response:", response);
 
       if (response) {
         toast.success("Marked as read");
@@ -67,7 +67,7 @@ export const useNotificationStore = create((set, get) => ({
         `/notifications//mark-all-read`,
         {},
       );
-      console.log("markAllRead response:", response);
+      log("markAllRead response:", response);
 
       if (response) {
         toast.success("All marked as read");
@@ -84,7 +84,7 @@ export const useNotificationStore = create((set, get) => ({
     try {
       // Make sure to send credentials for cookies
       const response = await axiosInstance.delete(`/notifications/${id}`, {});
-      console.log("Notfication delete response:", response);
+      log("Notfication delete response:", response);
 
       if (response) {
         toast.success("Notification removed succesfully!");
@@ -103,7 +103,7 @@ export const useNotificationStore = create((set, get) => ({
       const response = await axiosInstance.get(
         `/notifications/project/${projectId}`,
       );
-      console.log("RESPONSE FROM USE_NOTIFICATION_STORE:", response);
+      log("RESPONSE FROM USE_NOTIFICATION_STORE:", response);
       return response.data;
     } catch (error) {
       console.error("Error fetching notifications:", error);
@@ -116,7 +116,7 @@ export const useNotificationStore = create((set, get) => ({
   createAnnouncementApi : async (message) => {
     try {
       const response = await axiosInstance.post(`/notifications/announcement`, { message });
-      console.log("response:", response);
+      log("response:", response);
       return response.data;
     } catch (error) {
       console.error("Error fetching notifications:", error);
@@ -127,7 +127,7 @@ export const useNotificationStore = create((set, get) => ({
   fetchSystemAnnouncements : async () => {
     try {
       const response = await axiosInstance.get(`/notifications/announcement`);
-      console.log("System Notifications:", response);
+      log("System Notifications:", response);
       return response.data;
     } catch (error) {
       console.error("Error fetching notifications:", error);

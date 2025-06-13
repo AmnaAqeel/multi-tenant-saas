@@ -5,6 +5,8 @@ import { handleApiError } from "../utils/errorHandler";
 import { useAuthStore } from "../store/useAuthStore";
 import { ButtonLoader } from "../components/Loader";
 
+import log from "../utils/logger";
+
 import { Box, Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
@@ -21,9 +23,9 @@ const Login = () => {
       e.preventDefault();
     
       try {
-        console.log("user tried to login, sending data...")
+        log("user tried to login, sending data...")
         const response = await login(formData);
-        console.log("user logged in successfully...")
+        log("user logged in successfully...")
         if (response) {
           setFormData({ email: "", password: "" });
     
@@ -32,13 +34,13 @@ const Login = () => {
           const inviteToken = localStorage.getItem("inviteToken");
           
           if (inviteToken && redirectPath?.startsWith("/invite/")) {
-            console.log("special user case, came from invite...")
+            log("special user case, came from invite...")
             localStorage.removeItem("inviteToken");
             localStorage.removeItem("postLoginRedirect");
-            console.log("All the formalities done, taking him to invite page...")
+            log("All the formalities done, taking him to invite page...")
             navigate(`/company-invite/${inviteToken}`);
           } else {
-            console.log("normal user, taking him to dashboard...") 
+            log("normal user, taking him to dashboard...") 
             navigate("/");
           }
         }

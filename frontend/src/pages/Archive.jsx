@@ -9,6 +9,7 @@ import { useProjectStore } from "../store/useProjectStore";
 import { useAuthStore } from "../store/useAuthStore";
 
 import { RBAC } from "../utils/rbac";
+import log from "../utils/logger";
 
 const Archive = () => {
   const {
@@ -75,7 +76,7 @@ const Archive = () => {
     return diffInDays <= 30;
   });
 
-  console.log("All Projects:", archiveProjects);
+  log("All Projects in Archine.jsx:", archiveProjects);
 
   const filteredProjects = archiveProjects?.filter((project) =>
     project.title.toLowerCase().includes(searchTerm.toLowerCase()),

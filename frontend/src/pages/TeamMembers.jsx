@@ -10,6 +10,7 @@ import MinimalNavbar from "../components/MinimalNavbar";
 import EditRolesModal from "../components/EditRolesModal";
 import InviteUserModal from "../components/InviteUserModal";
 import { Loader } from "../components/Loader";
+import log from "../utils/logger";
 import { RBAC } from "../utils/rbac";
 
 const TeamMembers = () => {
@@ -43,7 +44,7 @@ const TeamMembers = () => {
     if (response) fetchUsers();
   };
 
-  console.log("companyUsers:", companyUsers);
+  log("companyUsers:", companyUsers);
   if (isFetchingCompany) return <Loader />;
   return (
     <>

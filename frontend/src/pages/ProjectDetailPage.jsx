@@ -28,9 +28,12 @@ import MinimalNavbar from "../components/MinimalNavbar";
 
 import CreateTaskModal from "../components/CreateTaskModal";
 import AddTeamMemberModal from "../components/AddTeamMemberModal";
+
 import { useNotificationStore } from "../store/useNotificationStore";
 import { useAuthStore } from "../store/useAuthStore";
+
 import { RBAC } from "../utils/rbac";
+import log from "../utils/logger";
 
 const ProjectDetailPage = () => {
   const { id } = useParams(); // Dynamic ID from URL
@@ -66,9 +69,9 @@ const ProjectDetailPage = () => {
   // Project Data
   useEffect(() => {
     const fetchProjectAndRelatedData = async () => {
-      console.log("Entered fetchProjectAndRelatedData");
+      log("Entered fetchProjectAndRelatedData");
       const project = await getProjectByIdApi(id); // Assuming this returns project
-      console.log("project: ", project);
+      log("project: ", project);
       setProjectData(project);
       fetchProjectTasksApi(id);
     };
@@ -85,13 +88,13 @@ const ProjectDetailPage = () => {
 
   //Tasks
   useEffect(() => {
-    console.log("API CALLED FROM PROJECTPAGE.JSX");
+    log("API CALLED FROM PROJECTPAGE.JSX");
     fetchAllTasksApi();
   }, []);
 
   //  filter tasks separately
   useEffect(() => {
-    console.log("all Tasks: ", allTasks);
+    log("all Tasks: ", allTasks);
     const filteredTasks = allTasks.filter((task) => task.project?._id === id);
     setProjectTasks(filteredTasks);
   }, [allTasks, id]); // ← only when allTasks or project ID changes
@@ -102,7 +105,7 @@ const ProjectDetailPage = () => {
 
     const fetchData = async () => {
       try {
-        console.log("Entered fetch notifications with projectId:", id);
+        log("Entered fetch notifications with projectId:", id);
         const response = await fetchNotifications(id);
         setNotifications(response || []); // default to empty if response is falsy
       } catch (err) {
@@ -169,7 +172,6 @@ const ProjectDetailPage = () => {
   };
 
   const handleRemoveTask = async (taskId) => {
-    console.log("Removing single Task");
     try {
       setProjectTasks(projectTasks.filter((task) => task._id !== taskId));
 
@@ -212,7 +214,7 @@ const ProjectDetailPage = () => {
     }
   };
 
-  console.log("project Data:", projectData);
+  log("project Data:", projectData);
   return (
     <>
       <MinimalNavbar padding={"p-5 md:p-5"} />

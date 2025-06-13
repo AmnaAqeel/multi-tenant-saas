@@ -38,6 +38,11 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"] //  Required!
 }));
 
+//Ping Route
+app.get("/", (req, res) => {
+  res.send("✅ Backend is alive 🔥");
+});
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/companies", companyRoutes);

@@ -1,8 +1,9 @@
 import axios from "axios";
 import { useAuthStore } from "../store/useAuthStore";
 import { useSocketStore } from "../store/useSocketStore";
-
 import { waitForToken } from "./waitForToken";
+
+import log from "../utils/logger";
 
 // Normal instance (has interceptors)
 const axiosInstance = axios.create({
@@ -21,16 +22,16 @@ export const rawAxios = axios.create({
 axiosInstance.interceptors.request.use(
   async (config) => {
     const accessToken = useAuthStore.getState().accessToken;
-    console.log("🔑 Access token from state:", accessToken);
+    log("🔑 Access token from state:", accessToken);
 
     // Token not yet available? Wait.
     if (!accessToken) {
       const waitedToken = await waitForToken();
       config.headers["Authorization"] = `Bearer ${waitedToken}`;
-      console.log("⏳ Waited and added token:", waitedToken);
+      log("⏳ Waited and added token:", waitedToken);
     } else {
       config.headers["Authorization"] = `Bearer ${accessToken}`;
-      console.log("🔑 Directly added token:", accessToken);
+      log("🔑 Directly added token:", accessToken);
     }
 
     return config;
@@ -50,16 +51,16 @@ axiosInstance.interceptors.response.use(
       !originalRequest.url.includes("/auth/refresh-token")
     ) {
       originalRequest._retry = true;
-      console.log("🔁 401 received — trying refresh...");
+      log("🔁 401 received — trying refresh...");
 
       try {
-        console.log(
+        log(
           "⏬ Trying to refresh token...",
           useAuthStore.getState().accessToken,
         );
         // ⏬ Get the expired token from store
         const expiredToken = useAuthStore.getState().accessToken;
-        console.log("⏬ Expired token:", expiredToken);
+        log("⏬ Expired token:", expiredToken);
 
         // ⏫ Send it in Authorization header
         const res = await rawAxios.post("/auth/refresh-token", null, {
@@ -78,7 +79,7 @@ axiosInstance.interceptors.response.use(
 
         // ⏩ Retry original request with new token
         originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
-        console.log("↩️ Session Restored");
+        log("↩️ Session Restored");
 
         return axiosInstance(originalRequest);
       } catch (refreshError) {

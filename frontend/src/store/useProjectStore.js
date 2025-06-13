@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import axiosInstance from "../utils/axiosInstance";
 import { handleApiError } from "../utils/errorHandler";
 
+import log from "../utils/logger";
+
 export const useProjectStore = create((set, get) => ({
   // Tracking states
   isCreatingProject: false,
@@ -76,7 +78,7 @@ export const useProjectStore = create((set, get) => ({
   deleteProjectApi: async (id) => {
     try {
       const response = await axiosInstance.delete(`/projects/${id}`, {});
-      console.log(`delete response in store:`, response);
+      log(`delete response in store:`, response);
       if (response) {
         toast.success(
           response?.data?.message || "Project deleted successfully!",
@@ -120,7 +122,7 @@ export const useProjectStore = create((set, get) => ({
   },
   addTeamMembersApi: async (id, members) => {
     try {
-      console.log("sending this to backend addMembers:", members);
+      log("sending this to backend addMembers:", members);
       const response = await axiosInstance.patch(
         `/projects/${id}/add-members`,
         members,
@@ -136,7 +138,7 @@ export const useProjectStore = create((set, get) => ({
   },
   removeTeamMembersApi: async (id, members) => {
     try {
-      console.log("Ids to remove", members);
+      log("Ids to remove", members);
       const response = await axiosInstance.patch(
         `/projects/${id}/remove-members`,
          [members] ,
@@ -151,13 +153,13 @@ export const useProjectStore = create((set, get) => ({
     }
   },
   updateStatusApi: async (id, status) => {
-    console.log("Hitting update Project status")
+    log("Hitting update Project status")
     try {
       const response = await axiosInstance.patch(`/projects/${id}/status`, {
         status,
       });
       if (response) {
-        console.log("response:", response)
+        log("response:", response)
         toast.success(response?.data?.message || "Status Updated!");
         return true;
       }
@@ -170,7 +172,7 @@ export const useProjectStore = create((set, get) => ({
     set({isFetchingProjectUsers: true});
     try {    
       const response = await axiosInstance.get(`/projects/${id}/members`, {});
-      console.log("response: ", response);
+      log("response: ", response);
       if (response) {
         return response.data.members;
       }
@@ -185,7 +187,7 @@ export const useProjectStore = create((set, get) => ({
     set({isFetchingArchive: true});
     try {    
       const response = await axiosInstance.get(`/projects/archived/list`, {});
-      console.log("response: ", response);
+      log("response: ", response);
       if (response) {
         return response.data;
       }
@@ -199,7 +201,7 @@ export const useProjectStore = create((set, get) => ({
   restoreProjectApi : async (id) => {
     try {    
       const response = await axiosInstance.patch(`/projects/${id}/restore`, {});
-      console.log("response: ", response);
+      log("response: ", response);
       if (response) {
         return response.data;
       }

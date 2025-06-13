@@ -4,7 +4,7 @@ import { useCompanyStore } from "../store/useCompanyStore";
 import { useAuthStore } from "../store/useAuthStore";
 import { refreshAuthUser } from "../utils/refreshAuthUser";
 
-
+import log from "../utils/logger";
 import { toast } from "sonner";
 
 const EditCompanyModal = ({ isOpen, onClose }) => {
@@ -23,7 +23,7 @@ const EditCompanyModal = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     if (isOpen) {
-        console.log("Fetching Company Info")
+        log("Fetching Company Info")
       fetchAndSetCompany();
     }
   }, [isOpen]);

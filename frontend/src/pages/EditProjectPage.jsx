@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 
 import { Loader, Trash, UserRoundPlus } from "lucide-react";
 import { toast } from "sonner";
+import log from "../utils/logger";
 
 import { useProjectStore } from "../store/useProjectStore";
 import { useCompanyStore } from "../store/useCompanyStore";
@@ -46,8 +47,8 @@ const EditProjectPage = () => {
     }
   };
 
-  console.log("CompanyUsers:", companyUsers);
-  console.log("ProjectData:", projectData);
+  log("CompanyUsers:", companyUsers);
+  log("ProjectData:", projectData);
 
   const priorityOptions = [
     { label: "Low", value: "low" },
@@ -94,13 +95,13 @@ const EditProjectPage = () => {
       };
       return updated;
     });
-    console.log("removeMembersId:", removeMembersId);
+    log("removeMembersId:", removeMembersId);
     await removeTeamMembersApi(projectData._id, removeMembersId);
   };
 
   if (isGettingProjectById || !projectData) return <Loader />;
 
-  console.log("projectData", projectData);
+  log("projectData", projectData);
 
   return (
     <>
@@ -259,7 +260,7 @@ const EditProjectPage = () => {
           <button
             className="btn w-full font-normal sm:w-auto"
             onClick={() => {
-              console.log("Navigating to /projects");
+              log("Navigating to /projects");
               navigate("/projects");
             }}
           >

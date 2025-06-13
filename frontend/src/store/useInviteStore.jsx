@@ -2,7 +2,9 @@ import { create } from "zustand";
 
 import axiosInstance from "../utils/axiosInstance";
 import { handleApiError } from "../utils/errorHandler";
+
 import { toast } from "sonner";
+import log from "../utils/logger";
 
 export const useInviteStore = create((set, get) => ({
   isSendingInvite: false,
@@ -12,7 +14,7 @@ export const useInviteStore = create((set, get) => ({
     set({ isSendingInvite: true });
     try {
       const response = await axiosInstance.post("/invites/", data);
-      console.log("response from invite:", response);
+      log("response from invite:", response);
       if (response) {
         return true;
       }
@@ -26,10 +28,10 @@ export const useInviteStore = create((set, get) => ({
   },
   joinCompany: async (token) => {
     set({ isJoining: true });
-    console.log("is Joining company");
+    log("is Joining company");
     try {
       const response = await axiosInstance.post(`/invites/${token}/join`, {});
-      console.log("response from invite:", response);
+      log("response from invite:", response);
       if (response) {
         return true;
       }
@@ -46,7 +48,7 @@ export const useInviteStore = create((set, get) => ({
     set({ isFetchingInvites: true });
     try {
       const response = await axiosInstance.get("/invites/");
-      console.log("response from invite:", response);
+      log("response from invite:", response);
       if (response) {
         return response.data.invites;
       }
@@ -62,7 +64,7 @@ export const useInviteStore = create((set, get) => ({
   deleteInvite: async (inviteId) => {
     try {
       const response = await axiosInstance.delete(`/invites/${inviteId}`);
-      console.log("response from invite:", response);
+      log("response from invite:", response);
       if (response) {
         return true;
       }

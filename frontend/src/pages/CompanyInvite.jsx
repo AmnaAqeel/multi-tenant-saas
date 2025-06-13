@@ -13,9 +13,7 @@ import { useCompanyStore } from "../store/useCompanyStore";
 import { useInviteStore } from "../store/useInviteStore";
 import PriorityBadge from "../components/PriorityBadge";
 
-// Logo is static rn
-//Non-Auth User can view Notifcations
-//for fix: implemented minimal Navbar check for errors and adjust padding
+import log from "../utils/logger";
 
 const CompanyInvite = () => {
   const { token } = useParams();
@@ -49,24 +47,24 @@ const CompanyInvite = () => {
   }
 
   const handleJoin = async () => {
-    console.log("entered handle Join...");
+    log("entered handle Join...");
     if (!authUser) {
       localStorage.setItem("inviteToken", token);
       localStorage.setItem("postLoginRedirect", `/company-invite/${token}`);
-      console.log("navigating to login...");
+      log("navigating to login...");
       navigate("/signin");
       return;
     }
 
     try {
-      console.log("user is authenticated...");
+      log("user is authenticated...");
       const res = await joinCompany(token); 
-      console.log("res of join company:", res);
+      log("res of join company:", res);
       if (res) {
         const refreshedUser = await refreshAuthUser();
-        console.log("refreshedUser: ", refreshedUser);
+        log("refreshedUser: ", refreshedUser);
         if (refreshedUser) {
-          console.log("navigating to dashboard...");
+          log("navigating to dashboard...");
           navigate("/");
         }
       }
@@ -75,8 +73,8 @@ const CompanyInvite = () => {
     }
   };
 
-  console.log("fetched Data:", dataFetched);
-  console.log("inviteCompany:", inviteCompany);
+  log("fetched Data:", dataFetched);
+  log("inviteCompany:", inviteCompany);
 
   // Render only when data is available
   return (

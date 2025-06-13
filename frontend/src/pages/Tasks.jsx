@@ -14,6 +14,7 @@ import { Loader } from "../components/Loader";
 import MinimalNavbar from "../components/MinimalNavbar";
 import CreateTaskModal from "../components/CreateTaskModal";
 import { RBAC } from "../utils/rbac";
+import log from "../utils/logger";
 
 import { toast } from "sonner";
 
@@ -38,12 +39,10 @@ const Tasks = () => {
 
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  console.log("allTasks: ", allTasks);
+  log("allTasks in Tasks.jsx: ", allTasks);
 
   useEffect(() => {
-    console.log("USE EFFECT TRIGGERED");
     if (allTasks.length === 0) {
-      console.log("API CALLED FROM TASKS.JSX");
       fetchAllTasksApi();
     }
   }, []);
@@ -70,7 +69,7 @@ const Tasks = () => {
     }
 
     const activeTasks = updated.filter((task) => !task.project?.isArchived);
-    console.log("activeTasks: ", activeTasks);
+    log("activeTasks: ", activeTasks);
 
     setFilteredTasks(activeTasks); //update local state
   }, [allTasks, selectedStatus, selectedPriority, selectedSortBy]);

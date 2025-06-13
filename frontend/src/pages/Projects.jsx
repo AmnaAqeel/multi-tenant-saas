@@ -19,6 +19,7 @@ import PriorityBadge from "../components/PriorityBadge";
 import ConfirmModal from "../components/ConfirmModal";
 import { Loader } from "../components/Loader";
 import { RBAC, disable } from "../utils/rbac";
+import log from "../utils/logger";
 
 import CreateProjectModal from "../components/CreateProjectModal";
 import EditStatusModal from "../components/EditStatusModal";
@@ -64,9 +65,9 @@ const Projects = () => {
 
   useEffect(() => {
     const fetchAll = async () => {
-      console.log("Fetching projects...");
+      log("Fetching projects...");
       const data = await fetchProjectsApi(); // your API call
-      console.log("All projects:", data);
+      log("All projects:", data);
       setProjects(data); // updates global state
     };
     fetchAll();

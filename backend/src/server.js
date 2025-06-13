@@ -7,9 +7,19 @@ import { setupSocket } from "./socket/index.js";
 import { allowedOrigins } from "./config/cors.js";
 import app from "./app.js";
 
+dotenv.config();
+
+// Disable logs in production
+if (process.env.NODE_ENV === "production") {
+  console.log = function () {};
+  console.debug = function () {};
+  console.info = function () {};
+  console.warn = function () {};
+  console.error = function () {};
+}
+
 const PORT = process.env.PORT || 5000;
 
-dotenv.config();
 const server = http.createServer(app);
 
 // Initialize Socket.IO

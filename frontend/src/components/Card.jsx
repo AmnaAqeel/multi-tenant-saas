@@ -4,13 +4,14 @@ import { useCompanyStore } from "../store/useCompanyStore";
 import { useAuthStore } from "../store/useAuthStore";
 
 import SwitchCompanyModal from "./SwitchCompanyModal";
+import log from "../utils/logger";
 
 const Card = ({ setShowSwitchModal, showSwitchModal }) => {
   const { setShowSearch } = useCompanyStore();
   const { authUser } = useAuthStore();
   const { companies } = authUser || {};
   const hasCompanies = Array.isArray(companies) && companies.length > 0;
-  console.log("hasCompanies:", hasCompanies);
+  log("hasCompanies:", hasCompanies);
   return (
     <div className="bg-base-200 flex flex-grow items-center justify-center px-4 py-12">
       <div className="bg-base-100 w-full max-w-xl rounded-2xl p-8 text-center">

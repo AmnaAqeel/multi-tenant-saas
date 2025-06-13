@@ -46,16 +46,16 @@ export default function CreateTaskModal({
 
   useEffect(() => {
     const fetchAll = async () => {
-      console.log("Fetching projects...");
+      log("Fetching projects...");
       const data = await fetchProjectsApi(); // your API call
-      console.log("All projects:", data);
+      log("All projects:", data);
       setProjects(data); // updates global state
     };
     fetchAll();
   }, []);
 
   useEffect(() => {
-    console.log("manually useEffect ran")
+    log("manually useEffect ran")
     if (formData.projectId && !preselectedProjectId) {
       const fetchUsers = async () => {
         try {

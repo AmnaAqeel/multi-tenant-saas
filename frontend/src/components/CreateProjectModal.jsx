@@ -1,7 +1,11 @@
 import { useState } from "react";
+
 import { useProjectStore } from "../store/useProjectStore";
-import { ButtonLoader } from "./Loader";
+import log from "../utils/logger";
+
 import { toast } from "sonner";
+import { ButtonLoader } from "./Loader";
+
 
 const CreateProjectModal = ({ isOpen, onClose }) => {
   const { createProjectApi, isCreatingProject, addProject } = useProjectStore();
@@ -22,7 +26,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
     }
 
     const response = await createProjectApi(projectData);
-    console.log("response", response);
+    log("response", response);
 
     if (response) {
       addProject(response.data);

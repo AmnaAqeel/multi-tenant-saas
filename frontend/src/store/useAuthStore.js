@@ -7,6 +7,8 @@ import { useSocketStore } from "./useSocketStore";
 import { rawAxios } from "../utils/axiosInstance";
 import { handleApiError } from "../utils/errorHandler";
 
+import log from "../utils/logger";
+
 export const useAuthStore = create(
   persist(
     (set, get) => ({
@@ -88,7 +90,7 @@ export const useAuthStore = create(
           get().setAuthUser(response.data.user); // Set user in state
           useSocketStore.getState().connect();
 
-          console.log(`response:`, response);
+          log(`response:`, response);
           toast.success(response?.data?.message); // Show success message
           
           return true; // Let component know it succeeded
@@ -101,10 +103,10 @@ export const useAuthStore = create(
       },
       logout: async () => {
         try {
-          console.log("Logout called");
+          log("Logout called");
           // Make sure to send credentials for cookies
           const response = await rawAxios.post("/auth/logout", {});
-          console.log("Logout response:", response);
+          log("Logout response:", response);
 
           // Clear Zustand state
           set({ accessToken: null, authUser: null });
@@ -121,15 +123,15 @@ export const useAuthStore = create(
         }
       },
       forgotPassword: async (data) => {
-        console.log("Entered zustand for forget password")
-        console.log("data", data)
+        log("Entered zustand for forget password")
+        log("Forgotten password data: ", data)
         set({ sendingEmail: true });
         try {
           const response = await rawAxios.post(
             "/auth/forgot-password",
             data,
           );
-          console.log("response :", response)
+          log("response:", response)
           if (response) {
             toast.success(response?.data?.message);
           }

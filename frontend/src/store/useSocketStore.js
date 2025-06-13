@@ -1,6 +1,8 @@
 // src/store/useSocketStore.js
 import { create } from "zustand";
 import { io } from "socket.io-client";
+import log from "../utils/logger";
+
 import { useAuthStore } from "./useAuthStore";
 import {useNotificationStore} from "../store/useNotificationStore";
 
@@ -13,9 +15,9 @@ export const useSocketStore = create((set, get) => ({
     const existingSocket = get().socket;
     if (existingSocket && existingSocket.connected) return;
 
-    console.log("🔌 Socket connecting...");
+    log("🔌 Socket connecting...");
     const accessToken = useAuthStore.getState().accessToken;
-    console.log("🔑 Access token:", accessToken);
+    log("🔑 Access token:", accessToken);
     if (!accessToken) return;
 
     const socket = io(import.meta.env.VITE_SOCKET_URL, {
@@ -33,54 +35,46 @@ export const useSocketStore = create((set, get) => ({
     socket.connect();
     // Optional: log connection
     socket.on("connect", () => {
-      console.log("🔌 Socket connected:", socket.id);
+      log("🔌 Socket connected:", socket.id);
     });
 
     //get all the notifications related to user
     socket.on("initialNotifications", (notifArray) => {
-      console.log("📥 Received all notifications:", notifArray);
+      log("📥 Received all notifications:", notifArray);
     
       //  Set them directly into the store
       useNotificationStore.getState().setNotifications(notifArray);
     
-      console.log("📥 Notifications now in store:", useNotificationStore.getState().notification);
+      log("📥 Notifications now in store:", useNotificationStore.getState().notification);
     });
 
     socket.on("newNotification", (notifData) => {
-      console.log("📥 Received real-time notification:", notifData);
+      log("📥 Received real-time notification:", notifData);
 
       // push to store state
       useNotificationStore.getState().addNotification(notifData);
       
-      console.log("📥 Received real-time notifications from state:", useNotificationStore.getState().notification);
+      log("📥 Received real-time notifications from state:", useNotificationStore.getState().notification);
     });
 
     socket.on("connect_error", async (err) => {
       console.error("🚨 Socket connect error:", err.message);
 
       if (err.message.includes("Invalid or expired token")) {
-        // try {
-        //   // Try refreshing the token manually (from your auth store)
-        //   const newToken = useAuthStore.getState().accessToken;
-        //   get().reconnectWithNewToken(newToken);
-        // } catch (refreshError) {
-        //   console.error("❌ Token refresh failed:", refreshError.message);
-        //   // Optional: Logout user or show login modal
-        // }
         const newToken = await refreshToken(); // Ensure this gives a valid token
 
         if (newToken) {
           socket.auth.token = newToken;
           socket.connect(); // manually reconnect with fresh token
         } else {
-          console.log("❌ No valid token, not reconnecting.");
+          log("❌ No valid token, not reconnecting.");
           socket.disconnect(); // stop loop
         }
       }
     });
 
     socket.on("disconnect", () => {
-      console.log("❌ Socket disconnected");
+      log("❌ Socket disconnected");
     });
 
     set({ socket });
@@ -97,7 +91,7 @@ export const useSocketStore = create((set, get) => ({
 
   // Update token and reconnect
   reconnectWithNewToken: (newToken) => {
-    console.log("🔑 Reconnecting with new token:", newToken);
+    log("🔑 Reconnecting with new token:", newToken);
     const oldSocket = get().socket;
     if (!oldSocket) return;
 

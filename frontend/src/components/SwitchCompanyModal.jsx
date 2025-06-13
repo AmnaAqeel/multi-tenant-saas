@@ -1,13 +1,17 @@
+import { useRef, useEffect } from "react";
+
 import { useAuthStore } from "../store/useAuthStore";
 import { useCompanyStore } from "../store/useCompanyStore";
-import { useRef, useEffect } from "react";
+
+import log from "../utils/logger";
+
 
 const SwitchCompanyModal = ({ isOpen, onClose }) => {
   const dialogRef = useRef();
   const { authUser } = useAuthStore();
   const { switchCompany, isSwitching, switchingTo } = useCompanyStore();
   const { activeCompany, companies } = authUser;
-  console.log(`authUser`, authUser);
+  log(`authUser in SwitchCompanyModal:`, authUser);
 
   useEffect(() => {
     const dialog = dialogRef.current;

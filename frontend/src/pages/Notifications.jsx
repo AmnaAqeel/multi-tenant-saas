@@ -5,6 +5,7 @@ import { EllipsisVertical, CircleCheck } from "lucide-react";
 
 import { Loader } from "../components/Loader";
 import MinimalNavbar from "../components/MinimalNavbar";
+import log from "../utils/logger";
 
 import { useNotificationStore } from "../store/useNotificationStore";
 
@@ -30,7 +31,7 @@ const Notifications = () => {
     setHasNewNotfication,
   } = useNotificationStore();
   const [selectedFilter, setSelectedFilter] = useState("all");
-  console.log("notification:", notification);
+  log("notification:", notification);
 
   useEffect(() => {
     if (notification.length > 0) {
@@ -38,14 +39,13 @@ const Notifications = () => {
       handleFilterChange(selectedFilter);
     }
   }, [notification]);
+  
   useEffect(() => {
     if (notification.length > 0) {
       setFilteredNotification(notification); // apply default filter
       setHasNewNotfication(notification.some((n) => !n.read));
     }
   }, [notification]);
-  
-  
 
   useEffect(() => {
     const hasUnread = filteredNotification.some((n) => !n.read);

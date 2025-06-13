@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Loader } from "../components/Loader";
+import log from "../utils/logger";
 
 import { useProjectStore } from "../store/useProjectStore";
 import { useTaskStore } from "../store/useTaskStore";
@@ -51,7 +52,7 @@ const AssignUserModal = ({
     // Call the function with the current assignedUsers prop to get the new array
     const updatedAssignedUsers = newAssignedFunction(assignedUsers);
 
-    console.log("AssignUserModal: handleAssignChange returning:", updatedAssignedUsers); // Log the actual array
+    log("AssignUserModal: handleAssignChange returning:", updatedAssignedUsers); // Log the actual array
     onAssignedUsersChange(updatedAssignedUsers); // Pass the resulting array
   };
 

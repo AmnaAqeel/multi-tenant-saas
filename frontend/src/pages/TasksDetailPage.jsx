@@ -7,6 +7,7 @@ import { useAuthStore } from "../store/useAuthStore";
 import { Loader } from "../components/Loader";
 import MinimalNavbar from "../components/MinimalNavbar";
 import AssignUserModal from "../components/AssignUserModal";
+import log from "../utils/logger";
 
 import { toast } from "sonner";
 import {
@@ -56,8 +57,8 @@ const TasksDetailPage = () => {
 
   const [showAssignModal, setShowAssignModal] = useState(false);
 
-  console.log("taskData:", taskData);
-  console.log("taskData.assignedTo:", taskData.assignedTo);
+  log("taskData:", taskData);
+  log("taskData.assignedTo:", taskData.assignedTo);
 
   useEffect(() => {
     if (!projectId || !taskId) navigate("/tasks");
@@ -76,14 +77,6 @@ const TasksDetailPage = () => {
       toast.error("Failed to load task");
     }
   };
-  //   try {
-  //     const data = await fetchSubTasksApi(taskData.project, taskData._id);
-  //     setSubTaskData(data);
-  //   } catch (error) {
-  //     console.error("Error fetching task:", error);
-  //     toast.error("Failed to load task");
-  //   }
-  // };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -161,7 +154,7 @@ const TasksDetailPage = () => {
         },
       );
 
-      console.log("Updated subtask status from API:", updatedSubTask.status);
+      log("Updated subtask status from API:", updatedSubTask.status);
 
       // Update state
       setTaskData((prev) => ({
@@ -170,7 +163,7 @@ const TasksDetailPage = () => {
           sub._id === updatedSubTask._id ? updatedSubTask : sub,
         ),
       }));
-      console.log("Updated local state:", taskData.subtasks);
+      log("Updated local state:", taskData.subtasks);
     } catch (error) {
       console.error(error);
       toast.error("Failed to update subtask status");
@@ -199,7 +192,7 @@ const TasksDetailPage = () => {
         taskData._id,
         comment,
       );
-      console.log("newComment: ", newComment)
+      log("newComment: ", newComment)
 
       setTaskData((prev) => ({
         ...prev,
@@ -543,34 +536,22 @@ const TasksDetailPage = () => {
               </div>
             </div>
 
-            {/* Attachments */}
-            {/* <div className="card bg-base-100 space-y-2 p-4">
-              <span className="font-semibold">Attachments</span>
-              <button className="btn btn-sm btn-outline w-full">
-                + Add Files
-              </button>
-            </div> */}
-
             {showAssignModal && (
               <AssignUserModal
                 projectId={taskData.project}
                 taskId={taskData._id}
                 assignedUsers={taskData.assignedTo}
                 onAssignedUsersChange={(newAssignedTo) => {
-                  console.log("TasksDetailPage: onAssignedUsersChange called with:", newAssignedTo);
+                  log("TasksDetailPage: onAssignedUsersChange called with:", newAssignedTo);
                   setTaskData((prev) => {
-                    console.log("TasksDetailPage: setTaskData updater - previous state:", prev);
                     const newState = {
                       ...prev,
                       assignedTo: newAssignedTo,
                     };
-                    console.log("TasksDetailPage: setTaskData updater - new state:", newState);
                     return newState;
                   });
-                  console.log("TasksDetailPage: after setTaskData call:", taskData); // This might be logged with the previous state
                 }}
                 onClose={() => {
-                  console.log("Closing modal...");
                   setShowAssignModal(false);
                 }}
               />

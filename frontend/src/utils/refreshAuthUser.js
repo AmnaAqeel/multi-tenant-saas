@@ -1,4 +1,6 @@
 import { rawAxios } from "../utils/axiosInstance";
+import log from "../utils/logger";
+
 import {useAuthStore} from "../store/useAuthStore"
 import { useSocketStore } from "../store/useSocketStore";
 
@@ -13,8 +15,8 @@ export const refreshAuthUser = async () => {
       withCredentials: false, 
     });
 
-    console.log("user's data has been refreshed");
-    console.log("the response of refreshAuthUser :", res)
+    log("user's data has been refreshed");
+    log("the response of refreshAuthUser :", res)
 
     const { accessToken, user } = res.data;
 

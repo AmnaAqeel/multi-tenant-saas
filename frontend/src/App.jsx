@@ -38,7 +38,7 @@ import { useSocketStore } from "./store/useSocketStore";
 
 import { Loader } from "./components/Loader";
 import { Toaster } from "sonner";
-
+import log from "./utils/logger";
 
 export default function App() {
   const location = useLocation();
@@ -54,24 +54,24 @@ export default function App() {
   //  you're using JWTs with refresh tokens, and the access token is stored in memory (via Zustand). When the user refreshes the page or reopens the browser:
   useEffect(() => {
     // Check if user is already logged in and update the state
-    console.log("checkAuth() ran");
-    console.log("authUser:", authUser);
+    log("checkAuth() ran");
+    log("authUser:", authUser);
 
     if (!isPublicRoute) {
       checkAuth(); //  Run only for protected routes
     } else {
-      console.log("Skipping auth for:", location.pathname);
+      log("Skipping auth for:", location.pathname);
     }
   }, [checkAuth, location]);
 
   useEffect(() => {
     const accessToken = useAuthStore.getState().accessToken;
-    console.log("The updated accessToken is:", accessToken);
+    log("The updated accessToken is:", accessToken);
 
     if (!isPublicRoute && accessToken) {
       useSocketStore.getState().connect();
     } else {
-      console.log(
+      log(
         "Skipping socket connect on public route:",
         location.pathname,
       );

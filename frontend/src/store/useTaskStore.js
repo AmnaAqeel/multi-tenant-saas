@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { toast } from "sonner";
+import log from "../utils/logger";
 
 import axiosInstance from "../utils/axiosInstance";
 import { handleApiError } from "../utils/errorHandler";
@@ -35,7 +36,7 @@ export const useTaskStore = create((set, get) => ({
         `/projects/${projectId}/tasks`,
         data,
       );
-      console.log("response of created task:", response);
+      log("response of created task:", response);
       if (response) {
         toast.success("Task created successfully!");
         return true;
@@ -49,8 +50,8 @@ export const useTaskStore = create((set, get) => ({
   },
   getTaskByIdApi: async (projectId, taskId) => {
     set({ isGettingTaskById: true });
-    console.log("projectId:", projectId);
-    console.log("taskId:", taskId);
+    log("projectId:", projectId);
+    log("taskId:", taskId);
     try {
       const response = await axiosInstance.get(
         `/projects/${projectId}/tasks/${taskId}`,
@@ -71,7 +72,7 @@ export const useTaskStore = create((set, get) => ({
       set({ isFetchingTasks: true });
       const response = await axiosInstance.get("/projects/tasks", {});
       if (response) {
-        console.log("All tasks response:", response);
+        log("All tasks response:", response);
         set({ allTasks: response.data.data });
       }
       return response;
@@ -87,7 +88,7 @@ export const useTaskStore = create((set, get) => ({
       set({ isFetchingTasks: true });
       const response = await axiosInstance.get(`/projects/${projectId}/tasks`, {});
       if (response) {
-        console.log("Project tasks response:", response);
+        log("Project tasks response:", response);
         set({ projectTasks: response.data });
       }
       return response;
@@ -105,7 +106,7 @@ export const useTaskStore = create((set, get) => ({
         `/projects/${projectId}/tasks/${taskId}/status`,
         { status },
       );
-      console.log("response", response);
+      log("response", response);
       if (response) {
         toast.success("Task status changed successfully!");
       }
@@ -121,7 +122,7 @@ export const useTaskStore = create((set, get) => ({
         `/projects/${projectId}/tasks/${taskId}`,
         updated,
       );
-      console.log("response", response);
+      log("response", response);
       if (response) {
         toast.success("Task updated successfully!");
       }
@@ -136,7 +137,7 @@ export const useTaskStore = create((set, get) => ({
       const response = await axiosInstance.patch(
         `/projects/${projectId}/tasks/${taskId}/update-members`, data
       );
-      console.log("response", response);
+      log("response", response);
       return response;
     } catch (error) {
       console.error("API Error:", error.response?.data || error.message);
@@ -149,7 +150,7 @@ export const useTaskStore = create((set, get) => ({
         `/projects/${projectId}/tasks/${taskId}`, 
       );
       if(response){
-        console.log("response", response);
+        log("response", response);
         toast.success("task deleted successfully!");
         return response;
       }
@@ -160,7 +161,7 @@ export const useTaskStore = create((set, get) => ({
   },
 
   fetchSubTasksApi: async (projectId, taskId) => {
-    console.log("projectid & taskId", projectId, taskId);
+    log("projectid & taskId", projectId, taskId);
     set({ isFetchingSubTasks: true });
     try {
       const response = await axiosInstance.get(
@@ -183,7 +184,7 @@ export const useTaskStore = create((set, get) => ({
         `/projects/${projectId}/tasks/${taskId}/subtasks`,
          title ,
       );
-      console.log("response of subTask creation", response);
+      log("response of subTask creation", response);
       if (response) {
         toast.success("Subtask created successfully!");
       }
@@ -194,12 +195,12 @@ export const useTaskStore = create((set, get) => ({
     }
   },
   checkSubTaskApi: async (projectId, taskId, subTaskId, status) => {
-    console.log("status:", status);
+    log("status:", status);
     try {
       const response = await axiosInstance.patch(
         `/projects/${projectId}/tasks/${taskId}/subtasks/${subTaskId}`, status,
       );
-      console.log("response", response);
+      log("response", response);
       if (response) {
         toast.success("Subtask updated successfully!");
       }
@@ -214,7 +215,7 @@ export const useTaskStore = create((set, get) => ({
       const response = await axiosInstance.delete(
         `/projects/${projectId}/tasks/${taskId}/subtasks/${subTaskId}`,
       );
-      console.log("response", response);
+      log("response", response);
       if (response) {
         toast.success("Subtask deleted successfully!");
       }
@@ -231,7 +232,7 @@ export const useTaskStore = create((set, get) => ({
         `/projects/${projectId}/tasks/${taskId}/comments`,
         {text}
       );
-      console.log("response", response);
+      log("response", response);
       if (response) {
         toast.success("Comment added successfully!");
       }
@@ -247,7 +248,7 @@ export const useTaskStore = create((set, get) => ({
         `/projects/${projectId}/tasks/${taskId}/comments/${commentId}`,
         {}
       );
-      console.log("response", response);
+      log("response", response);
       if (response) {
         toast.success("Comment deleted successfully!");
       }

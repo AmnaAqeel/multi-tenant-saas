@@ -12,6 +12,7 @@ import { useAuthStore } from "../store/useAuthStore";
 
 import StatusBadge from "../components/StatusBadge";
 import { Loader } from "../components/Loader";
+import log from "../utils/logger";
 
 import { RBAC } from "../utils/rbac";
 
@@ -40,9 +41,9 @@ const Overview = () => {
   // Fetching Projects
   useEffect(() => {
     const fetchAll = async () => {
-      console.log("Fetching projects...");
+      log("Fetching projects...");
       const data = await fetchProjectsApi();
-      console.log("All projects:", data);
+      log("All projects:", data);
       setProjects(data);
     };
     fetchAll();
@@ -82,7 +83,7 @@ const Overview = () => {
   //click outside useEffect
   useEffect(() => {
     const handleClickOutside = (event) => {
-      console.log("Entered the handleClickOutside function");
+      log("Entered the handleClickOutside function");
       // Check if the click target is NOT within the button
       if (buttonRef.current && !buttonRef.current.contains(event.target)) {
         setAddAnnouncement(false); // Close the announcement
@@ -105,16 +106,16 @@ const Overview = () => {
       notif.type === "user_joined" || notif.type === "project_restored",
   );
 
-  console.log("Notifications: ", notification);
+  log("Notifications: ", notification);
 
   // Add new announcement
   const handleAddAnnouncement = async () => {
     if (!announcementText.trim()) return;
 
     const response = await createAnnouncementApi(announcementText);
-    console.log("Ok sent Api request");
+    log("Ok sent Api request");
     if (response) {
-      console.log("response for system Announcements", response);
+      log("response for system Announcements", response);
       toast.success("Announcement created successfully!");
       setSystemAnnouncement((prev) => [response, ...prev]);
       setAddAnnouncement(false);
@@ -122,8 +123,8 @@ const Overview = () => {
     }
   };
 
-  console.log("system Announcement: ", systemAnnouncement);
-  console.log("allProjects", allProjects);
+  log("system Announcement: ", systemAnnouncement);
+  log("allProjects", allProjects);
 
   if (loading) return <Loader />;
 
