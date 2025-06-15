@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import axiosInstance from "../utils/axiosInstance";
 import { handleApiError } from "../utils/errorHandler";
 import { toast } from "sonner";
+import log from "../utils/logger";
 
 export const useNotificationStore = create((set, get) => ({
   notification: [],
