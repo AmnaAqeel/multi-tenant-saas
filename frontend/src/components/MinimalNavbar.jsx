@@ -7,12 +7,15 @@ import { RBAC } from "../utils/rbac";
 
 import { PencilLine } from "lucide-react";
 
-
 const MinimalNavbar = ({ padding = "p-5 md:p-18", name }) => {
   const { authUser } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
 
-  const heading = name ? name : authUser?.activeCompanyName ? authUser.activeCompanyName : "";
+  const heading = name
+    ? name
+    : authUser?.activeCompanyName
+      ? authUser.activeCompanyName
+      : "";
   const role = authUser?.role;
 
   return (
@@ -20,21 +23,23 @@ const MinimalNavbar = ({ padding = "p-5 md:p-18", name }) => {
       {/* Header */}
       <div className={`flex w-full items-center justify-between ${padding}`}>
         <div className="flex items-center">
-          <h3 className="text-md ml-5 font-semibold md:ml-0 md:text-xl">
-            {heading}
-            {"'s"}
-            {"  "}
-            WorkSpace
-          </h3>
-           <RBAC role={role} action="edit_company">
-          
+          {authUser.companyId && (
+            <h3 className="text-md ml-5 font-semibold md:ml-0 md:text-xl">
+              {heading}
+              {"'s"}
+              {"  "}
+              WorkSpace
+            </h3>
+          )}
+
+          <RBAC role={role} action="edit_company">
             <button
               onClick={() => setIsOpen(true)}
-              className="ml-1 hover:bg-transparent transform -translate-y-2 cursor-pointer p-1 hover:scale-110"
+              className="ml-1 -translate-y-2 transform cursor-pointer p-1 hover:scale-110 hover:bg-transparent"
             >
-              <PencilLine className="size-4.5 text-base-content/40" />
+              <PencilLine className="text-base-content/40 size-4.5" />
             </button>
-         </RBAC>
+          </RBAC>
         </div>
         <div className="flex items-center">
           <div className="theme-toggle p-2 hover:scale-120 hover:transform">
@@ -43,12 +48,15 @@ const MinimalNavbar = ({ padding = "p-5 md:p-18", name }) => {
               className2="size-7 md:size-6"
             />
           </div>
-          {
-            authUser &&(
-          <div className="size-8 overflow-hidden rounded-full md:size-8">
-            <img className="size-8 object-cover" src={authUser.profilePicture} alt="user1" />
-          </div>)
-          }
+          {authUser && (
+            <div className="size-8 overflow-hidden rounded-full md:size-8">
+              <img
+                className="size-8 object-cover"
+                src={authUser.profilePicture}
+                alt="user1"
+              />
+            </div>
+          )}
         </div>
       </div>
       <EditCompanyModal isOpen={isOpen} onClose={() => setIsOpen(false)} />

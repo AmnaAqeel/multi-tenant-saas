@@ -257,7 +257,7 @@ const Overview = () => {
                         ))}
                       </div>
                       <div className="text-base-content/70 text-[14px]">
-                        Due in{" "}
+                        Due{" "}
                         {formatDistanceToNow(new Date(project.dueDate), {
                           addSuffix: true,
                         })}

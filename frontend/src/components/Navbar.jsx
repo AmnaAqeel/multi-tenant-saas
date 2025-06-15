@@ -99,6 +99,7 @@ const Navbar = ({ setShowSwitchModal, showSwitchModal }) => {
     const hasUnread = filteredNotification.some((n) => !n.read);
     setNewNotification(hasUnread);
   }, [filteredNotification, setNewNotification]);
+
   return (
     <>
       {/* Navbar */}
@@ -293,24 +294,26 @@ const Navbar = ({ setShowSwitchModal, showSwitchModal }) => {
                     </li>
 
                     {/* Invite User */}
-                    <li role="menuitem" className="hover:bg-base-200">
-                      <button
-                        className="flex items-center gap-2 text-sm"
-                        onClick={() => {
-                          const scrollbarWidth =
-                            window.innerWidth -
-                            document.documentElement.clientWidth;
-                          document.documentElement.style.setProperty(
-                            "--scrollbar-width",
-                            `${scrollbarWidth}px`,
-                          );
-                          setShowInviteModal(true);
-                        }}
-                      >
-                        <UserPlus className="size-4" />
-                        Invite User
-                      </button>
-                    </li>
+                    {authUser.companyId && (
+                      <li role="menuitem" className="hover:bg-base-200">
+                        <button
+                          className="flex items-center gap-2 text-sm"
+                          onClick={() => {
+                            const scrollbarWidth =
+                              window.innerWidth -
+                              document.documentElement.clientWidth;
+                            document.documentElement.style.setProperty(
+                              "--scrollbar-width",
+                              `${scrollbarWidth}px`,
+                            );
+                            setShowInviteModal(true);
+                          }}
+                        >
+                          <UserPlus className="size-4" />
+                          Invite User
+                        </button>
+                      </li>
+                    )}
 
                     {/* settings */}
                     <li role="menuitem" className="hover:bg-base-200">
